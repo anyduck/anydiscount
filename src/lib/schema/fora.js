@@ -1,16 +1,17 @@
-import { and, gt, lte, relations, sql } from "drizzle-orm";
+import { and, gt, lte, sql } from "drizzle-orm";
 import {
 	customType,
 	date,
 	integer,
 	numeric,
+	pgEnum,
 	pgSchema,
 	primaryKey,
 	text,
 	timestamp,
 	uuid,
 } from "drizzle-orm/pg-core";
-import { devices } from "./public";
+import { devices, families, users } from "./public";
 
 const ean13 = /** @type {typeof customType<{data: string}>} */ (customType)({
 	dataType() {
@@ -37,12 +38,31 @@ export const accounts = foraSchema.table("accounts", {
 	expiredAt: timestamp("expired_at", { withTimezone: true }).notNull(),
 });
 
-export const accountsRelations = relations(accounts, ({ one }) => ({
-	device: one(devices, {
-		fields: [accounts.deviceId],
-		references: [devices.id],
-	}),
-}));
+export const couponStatus = pgEnum('fora"."coupon_status', [
+	"template",
+	"available",
+	"assigned",
+	"reported",
+	"awaiting_refund",
+	"refunded",
+	"awaiting_receipt",
+	"applied",
+]);
+
+/* prettier-ignore */
+export const coupons = foraSchema.table("coupons", {
+	id: uuid("id").primaryKey(),
+
+	status: couponStatus("status").notNull(),
+	familyId: uuid("family_id").references(() => families.id),
+	userId: uuid("user_id").references(() => users.id),
+
+	accountId: ean13("account_id").notNull().references(() => accounts.id),
+	totalDiscount: numeric("total_discount", { precision: 9, scale: 2 }).notNull(),
+	requiredSpend: numeric("required_spend", { precision: 9, scale: 2 }).notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+	expiredAt: timestamp("expired_at", { withTimezone: true }).notNull(),
+});
 
 /* prettier-ignore */
 export const bonuses = foraSchema.table("bonuses", {
