@@ -1,7 +1,7 @@
 import { coupons } from "$lib/schema/fora";
 import { db } from "$lib/server/db";
 import { error } from "@sveltejs/kit";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ locals, params }) {
@@ -23,3 +23,20 @@ export async function load({ locals, params }) {
 		coupon: data.coupon,
 	};
 }
+
+/** @type {import('./$types').Actions} */
+export const actions = {
+	default: async ({ locals, params }) => {
+		if (!locals.userId) {
+			error(401, "Unauthorized");
+		}
+
+		const data = await db
+			.update(coupons)
+			.set({ status: "awaiting_receipt" })
+			.where(and(eq(coupons.status, "assigned"), eq(coupons.id, params.id)))
+			.returning({ id: coupons.id });
+
+		return { success: Boolean(data) };
+	},
+};

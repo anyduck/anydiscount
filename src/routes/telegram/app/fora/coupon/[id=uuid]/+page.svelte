@@ -1,9 +1,15 @@
 <script>
+	import { enhance } from "$app/forms";
 	import Barcode from "$lib/components/Barcode.svelte";
 	import { onMount } from "svelte";
 
 	/** @type {import('./$types').PageData} */
 	export let data;
+
+	/** @type {HTMLInputElement} */
+	let submit;
+
+	$: isAssigned = data.coupon.status === "assigned";
 
 	onMount(() => {
 		window.Telegram.WebApp.expand();
@@ -12,17 +18,19 @@
 		window.Telegram.WebApp.BackButton.onClick(back);
 		window.Telegram.WebApp.BackButton.show();
 
+		window.Telegram.WebApp.MainButton.onClick(submit.click);
 		const styles = getComputedStyle(document.body);
 		window.Telegram.WebApp.MainButton.setParams({
 			color: styles.getPropertyValue("--color-button-background"),
 			text_color: styles.getPropertyValue("--color-button-text"),
 			text: "ПОЗНАЧИТИ ВИКОРИСТАНИМ",
-			is_visible: true,
+			is_visible: isAssigned,
 		});
 
 		return () => {
 			window.Telegram.WebApp.MainButton.hide();
 			window.Telegram.WebApp.BackButton.hide();
+			window.Telegram.WebApp.MainButton.offClick(submit.click);
 			window.Telegram.WebApp.BackButton.offClick(back);
 		};
 	});
@@ -34,6 +42,9 @@
 <div class="separator"></div>
 <div class="section info">
 	Баланс: <span class="balance skeleton">00.00 грн.</span>
+	<form action="" method="post" use:enhance>
+		<input type="submit" bind:this={submit} on:click={window.Telegram.WebApp.MainButton.hide} />
+	</form>
 </div>
 
 <style>
@@ -68,5 +79,8 @@
 	.info {
 		text-align: center;
 		font-size: 1.5rem;
+	}
+	form {
+		display: none;
 	}
 </style>
