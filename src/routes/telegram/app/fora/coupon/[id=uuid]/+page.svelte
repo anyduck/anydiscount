@@ -18,7 +18,8 @@
 		window.Telegram.WebApp.BackButton.onClick(back);
 		window.Telegram.WebApp.BackButton.show();
 
-		window.Telegram.WebApp.MainButton.onClick(submit.click);
+		const mark = () => submit.click();
+		window.Telegram.WebApp.MainButton.onClick(mark);
 		const styles = getComputedStyle(document.body);
 		window.Telegram.WebApp.MainButton.setParams({
 			color: styles.getPropertyValue("--color-button-background"),
@@ -30,7 +31,7 @@
 		return () => {
 			window.Telegram.WebApp.MainButton.hide();
 			window.Telegram.WebApp.BackButton.hide();
-			window.Telegram.WebApp.MainButton.offClick(submit.click);
+			window.Telegram.WebApp.MainButton.offClick(mark);
 			window.Telegram.WebApp.BackButton.offClick(back);
 		};
 	});
