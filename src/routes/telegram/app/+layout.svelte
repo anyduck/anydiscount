@@ -23,7 +23,7 @@
 		background-color: var(--color-background);
 	}
 	:global(.skeleton) {
-		color: transparent;
+		color: transparent !important;
 		border-radius: 1rem;
 		animation: skeleton-loading 1s linear infinite alternate;
 	}
