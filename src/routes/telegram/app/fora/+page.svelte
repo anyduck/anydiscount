@@ -1,5 +1,6 @@
 <script>
 	import Coupon from "$lib/components/Coupon.svelte";
+	import { enhance } from "$app/forms";
 
 	/** @type {import('./$types').PageData} */
 	export let data;
@@ -10,6 +11,40 @@
 	});
 </script>
 
+<form method="post" use:enhance>
+	<Coupon>
+		<svelte:fragment slot="left">
+			50+ грн.<br />
+			Немає мінімальної суми<br />
+			В наявності {data.counts.required_nothing} шт.
+		</svelte:fragment>
+		<button
+			slot="right"
+			formaction="?required_spend=0.00"
+			type="submit"
+			class="action"
+			disabled={data.counts.required_nothing === 0}
+		>
+			Отримати
+		</button>
+	</Coupon>
+	<Coupon>
+		<svelte:fragment slot="left">
+			0 або 100 грн.<br />
+			Покупка понад 100 грн.<br />
+			В наявності {data.counts.required_hundred} шт.
+		</svelte:fragment>
+		<button
+			slot="right"
+			type="submit"
+			formaction="?required_spend=100.00"
+			class="action"
+			disabled={data.counts.required_hundred === 0}
+		>
+			Отримати
+		</button>
+	</Coupon>
+</form>
 {#await data.streamed.coupons}
 	<h3 class="skeleton">Ваші купони</h3>
 	<Coupon>
@@ -21,14 +56,14 @@
 		<span slot="right" class="action skeleton">Перейти</span>
 	</Coupon>
 {:then coupons}
+	<h3>Ваші купони</h3>
 	{#each coupons as coupon (coupon.id)}
-		<h3>Ваші купони</h3>
 		<Coupon>
 			<svelte:fragment slot="left">
 				{coupon.totalDiscount} грн.
 				<br />
 				{#if parseFloat(coupon.requiredSpend)}
-					Понад {coupon.requiredSpend} грн.
+					Покупка понад {coupon.requiredSpend} грн.
 				{:else}
 					Немає мінімальної суми
 				{/if}
@@ -60,7 +95,12 @@
 	a {
 		text-decoration: none;
 	}
-	.marked {
+	button {
+		outline: none;
+		border: none;
+	}
+	.marked,
+	button:disabled {
 		background-color: var(--color-hint);
 	}
 </style>
