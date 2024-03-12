@@ -35,7 +35,6 @@ export const accounts = foraSchema.table("accounts", {
 	refreshToken: text("refresh_token").notNull(),
 
 	createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-	expiredAt: timestamp("expired_at", { withTimezone: true }).notNull(),
 });
 
 export const couponStatus = pgEnum('fora"."coupon_status', [
