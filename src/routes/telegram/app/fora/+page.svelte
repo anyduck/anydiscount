@@ -74,6 +74,7 @@
 				slot="right"
 				class="action"
 				class:marked={coupon.status === "awaiting_receipt"}
+				data-sveltekit-preload-data="false"
 				href="fora/coupon/{coupon.id}">Перейти</a
 			>
 		</Coupon>

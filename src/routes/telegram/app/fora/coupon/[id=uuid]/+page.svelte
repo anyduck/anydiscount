@@ -42,8 +42,13 @@
 </div>
 <div class="separator"></div>
 <div class="section info">
-	Баланс: <span class="balance skeleton">00.00 грн.</span>
-	<form action="" method="post" use:enhance>
+	Баланс:
+	{#await data.streamed.balance}
+		<span class="balance skeleton">00.00 грн.</span>
+	{:then balance}
+		<span class="balance">{balance} грн.</span>
+	{/await}
+	<form action="?/mark" method="post" use:enhance>
 		<input type="submit" bind:this={submit} on:click={window.Telegram.WebApp.MainButton.hide} />
 	</form>
 </div>
