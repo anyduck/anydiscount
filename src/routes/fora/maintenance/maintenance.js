@@ -11,14 +11,14 @@ import { devices } from "$lib/schema/public";
 import { db } from "$lib/server/db";
 import {
 	Account,
+	REFERRAL_MINIMUM_SPEND,
+	REFERRAL_REWARD_AMOUNT,
 	getChequesInfos,
 	getLastChequeHeadersFast,
 	getPersonalInfo,
 	refreshToken,
 } from "$lib/server/fora";
-import { and, eq, gt, gte, or } from "drizzle-orm";
-
-const REFERRAL_REWARD_AMOUNT = 50;
+import { and, eq, gte, not, or } from "drizzle-orm";
 
 export async function maintenance() {
 	const awaitingReceipts = await db
@@ -27,8 +27,8 @@ export async function maintenance() {
 				id: coupons.id,
 				status: coupons.status,
 				familyId: coupons.familyId,
-				totalDiscount: coupons.totalDiscount,
-				requiredSpend: coupons.requiredSpend,
+				totalDiscount: coupons.discount,
+				isReferral: coupons.isReferral,
 				createdAt: coupons.createdAt,
 			},
 			account: {
@@ -66,12 +66,10 @@ export async function maintenance() {
 		_receiptProducts.push(...data.products);
 
 		// Check if the referral reward is triggered
-		const requiredSpend = parseFloat(coupon.requiredSpend);
 		const rewardReceipts = data.receipts.filter(
-			(r) => parseFloat(r.total) + parseFloat(r.discount) >= requiredSpend,
+			(r) => parseFloat(r.total) + parseFloat(r.discount) >= REFERRAL_MINIMUM_SPEND,
 		);
-		if (requiredSpend && rewardReceipts.length) {
-			console.log(rewardReceipts, Boolean(rewardReceipts), rewardReceipts.length);
+		if (coupon.isReferral && rewardReceipts.length) {
 			const accuredOn = getNextDate(
 				rewardReceipts.reduce((min, r) => (min.createdAt < r.createdAt ? min : r)).createdAt,
 			);
@@ -86,8 +84,8 @@ export async function maintenance() {
 				status: "template",
 				familyId: coupon.familyId,
 				accountId: account.id,
-				requiredSpend: "0",
-				totalDiscount: REFERRAL_REWARD_AMOUNT.toString(),
+				isReferral: false,
+				discount: REFERRAL_REWARD_AMOUNT.toString(),
 				expiredAt: expiredOn,
 			});
 		}
@@ -95,9 +93,9 @@ export async function maintenance() {
 		// Update coupon status
 		let status = coupon.status;
 		const usedDiscount = data.receipts.reduce((sum, r) => sum + parseFloat(r.discount), 0);
-		if (requiredSpend && rewardReceipts.length) {
+		if (coupon.isReferral && rewardReceipts.length) {
 			status = "applied";
-		} else if (!requiredSpend && usedDiscount > 0.8 * parseFloat(coupon.totalDiscount)) {
+		} else if (!coupon.isReferral && usedDiscount > 0.8 * parseFloat(coupon.totalDiscount)) {
 			status = "applied";
 		} else {
 			status = "assigned";
@@ -118,7 +116,7 @@ export async function maintenance() {
 		.select({
 			coupon: {
 				id: coupons.id,
-				totalDiscount: coupons.totalDiscount,
+				discount: coupons.discount,
 			},
 			account: {
 				id: accounts.id,
@@ -140,8 +138,8 @@ export async function maintenance() {
 			and(
 				eq(coupons.status, "template"),
 				or(
-					and(eq(coupons.requiredSpend, "0"), gte(activeBonuses.amount, coupons.totalDiscount)),
-					and(gt(coupons.requiredSpend, "0"), gte(referrBonuses.amount, coupons.totalDiscount)),
+					and(not(coupons.isReferral), gte(activeBonuses.amount, coupons.discount)),
+					and(coupons.isReferral, gte(referrBonuses.amount, coupons.discount)),
 				),
 			),
 		);
@@ -154,15 +152,10 @@ export async function maintenance() {
 		const bonusBalance = personalInfo.Bonus.bonusBalanceAmount;
 
 		let value;
-		if (bonusBalance < parseFloat(coupon.totalDiscount)) {
-			value = /** @type {const} */ ({
-				status: "reported",
-			});
+		if (bonusBalance < parseFloat(coupon.discount)) {
+			value = /** @type {const} */ ({ status: "reported" });
 		} else {
-			value = /** @type {const} */ ({
-				status: "available",
-				totalDiscount: bonusBalance.toString(),
-			});
+			value = /** @type {const} */ ({ status: "available", discount: bonusBalance.toString() });
 		}
 		await db.update(coupons).set(value).where(eq(coupons.id, coupon.id));
 	}

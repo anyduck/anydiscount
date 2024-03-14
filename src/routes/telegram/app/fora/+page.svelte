@@ -11,39 +11,29 @@
 	});
 </script>
 
-<form method="post" use:enhance>
-	<Coupon>
-		<svelte:fragment slot="left">
-			50+ грн.<br />
-			Немає мінімальної суми<br />
-			В наявності {data.counts.required_nothing} шт.
-		</svelte:fragment>
-		<button
-			slot="right"
-			formaction="?required_spend=0.00"
-			type="submit"
-			class="action"
-			disabled={data.counts.required_nothing === 0}
-		>
-			Отримати
-		</button>
-	</Coupon>
-	<Coupon>
-		<svelte:fragment slot="left">
-			0 або 100 грн.<br />
-			Покупка понад 100 грн.<br />
-			В наявності {data.counts.required_hundred} шт.
-		</svelte:fragment>
-		<button
-			slot="right"
-			type="submit"
-			formaction="?required_spend=100.00"
-			class="action"
-			disabled={data.counts.required_hundred === 0}
-		>
-			Отримати
-		</button>
-	</Coupon>
+<form action="" method="post" use:enhance>
+	{#each data.coupons as coupon}
+		<Coupon>
+			<svelte:fragment slot="left">
+				{coupon.discount} грн.
+				<br />
+				{#if coupon.isReferral}
+					Покупка понад {data.minimumSpend} грн.
+				{:else}
+					Немає мінімальної суми
+				{/if}
+				<br />
+				В наявності {coupon.count} шт.
+			</svelte:fragment>
+			<button
+				slot="right"
+				type="submit"
+				class="action"
+				formaction="?is_referral={coupon.isReferral}"
+				disabled={!coupon.count}>Отримати</button
+			>
+		</Coupon>
+	{/each}
 </form>
 {#await data.streamed.coupons}
 	<h3 class="skeleton">Ваші купони</h3>
@@ -60,10 +50,10 @@
 	{#each coupons as coupon (coupon.id)}
 		<Coupon>
 			<svelte:fragment slot="left">
-				{coupon.totalDiscount} грн.
+				{coupon.discount} грн.
 				<br />
-				{#if parseFloat(coupon.requiredSpend)}
-					Покупка понад {coupon.requiredSpend} грн.
+				{#if coupon.isReferral}
+					Покупка понад {data.minimumSpend} грн.
 				{:else}
 					Немає мінімальної суми
 				{/if}

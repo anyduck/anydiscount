@@ -4,6 +4,9 @@ const APP_VERSION_CODE = "195";
 const APP_VERSION_NAME = "1.39.4";
 const APP_API_URL = "https://api.mob.fora.ua/api/2.0/exec/FZGlobal/";
 
+export const REFERRAL_REWARD_AMOUNT = 50.0;
+export const REFERRAL_MINIMUM_SPEND = 100.0;
+
 const BASE_RESPONSE = z.object({
 	error: z.object({
 		errorCode: z.number(),

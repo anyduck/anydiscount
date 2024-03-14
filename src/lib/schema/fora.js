@@ -1,5 +1,6 @@
 import { and, eq, gt, lte, sql, sum } from "drizzle-orm";
 import {
+	boolean,
 	customType,
 	date,
 	foreignKey,
@@ -58,8 +59,8 @@ export const coupons = foraSchema.table("coupons", {
 	userId: uuid("user_id").references(() => users.id),
 
 	accountId: ean13("account_id").notNull().references(() => accounts.id),
-	totalDiscount: numeric("total_discount", { precision: 9, scale: 2 }).notNull(),
-	requiredSpend: numeric("required_spend", { precision: 9, scale: 2 }).notNull(),
+	discount: numeric("discount", { precision: 9, scale: 2 }).notNull(),
+	isReferral: boolean("is_referral").notNull(),
 	createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 	expiredAt: timestamp("expired_at", { withTimezone: true }).notNull(),
 });
