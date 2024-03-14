@@ -5,62 +5,16 @@ export const config = {
 };
 
 import { CRON_SECRET } from "$env/static/private";
-import { availableBonuses, bonuses } from "$lib/schema/fora";
-import { db } from "$lib/server/db";
-import { sql } from "drizzle-orm";
+import { maintenance } from "./maintenance";
 
 /** @type {import("./$types").RequestHandler} */
 export function GET({ request }) {
-	// FIXME: find out if this requires a timing-safe comparison
 	if (request.headers.get("authorization") !== `Bearer ${CRON_SECRET}`) {
 		return new Response("Unauthorized", { status: 401 });
 	}
 
 	// FIXME: a hack to bypass vercel free-tier max duration
 	return new Response(streamUntil(maintenance()));
-}
-
-async function maintenance() {
-	console.log(await db.select().from(availableBonuses));
-
-	/**
-	 * @type {typeof bonuses.$inferInsert[]}
-	 */
-	const to_insert = [
-		{
-			accountId: "027-123456789-2",
-			accuredOn: parseDate("01.01.2024"),
-			expiredOn: parseDate("діє до 01.04.2024".replace("діє до ", "")),
-			initialAmount: "+12.0",
-		},
-		{
-			accountId: "027-123456789-2",
-			accuredOn: parseDate("01.01.2023"),
-			expiredOn: parseDate("діє до 01.04.2023".replace("діє до ", "")),
-			initialAmount: "+50.0",
-		},
-	];
-
-	await db
-		.insert(bonuses)
-		.values(to_insert)
-		.onConflictDoUpdate({
-			target: [bonuses.accountId, bonuses.accuredOn],
-			set: {
-				initialAmount: sql`excluded.initial_amount`,
-				expiredOn: sql`excluded.expired_on`,
-			},
-		});
-}
-
-/**
- * Converts DMY date to ISO 8601
- * @param {string} date
- * @returns {string}
- */
-function parseDate(date) {
-	const [day, month, year] = date.split(".");
-	return `${year}-${month}-${day}`;
 }
 
 /**

@@ -1,7 +1,8 @@
-import { and, gt, lte, sql } from "drizzle-orm";
+import { and, eq, gt, lte, sql, sum } from "drizzle-orm";
 import {
 	customType,
 	date,
+	foreignKey,
 	integer,
 	numeric,
 	pgEnum,
@@ -50,7 +51,7 @@ export const couponStatus = pgEnum('fora"."coupon_status', [
 
 /* prettier-ignore */
 export const coupons = foraSchema.table("coupons", {
-	id: uuid("id").primaryKey(),
+	id: uuid("id").primaryKey().default(sql`uuid_generate_v7()`),
 
 	status: couponStatus("status").notNull(),
 	familyId: uuid("family_id").references(() => families.id),
@@ -65,26 +66,66 @@ export const coupons = foraSchema.table("coupons", {
 
 /* prettier-ignore */
 export const bonuses = foraSchema.table("bonuses", {
-	accountId: ean13("account_id").notNull().references(() => accounts.id),
-	initialAmount: numeric("initial_amount", { precision: 9, scale: 2 }).notNull(),
-	appliedAmount: numeric("applied_amount", { precision: 9, scale: 2 }).notNull().default("0"),
+	accountId: ean13("account_id").primaryKey().references(() => accounts.id),
+	amount: numeric("amount", { precision: 9, scale: 2 }).notNull(),
 	accuredOn: date("accured_on").notNull(),
 	expiredOn: date("expired_on").notNull(),
+});
+
+/* prettier-ignore */
+export const activeBonuses = foraSchema.view("active_bonuses").as((qb) => qb
+	.select({ accountId: bonuses.accountId, amount: bonuses.amount })
+	.from(bonuses)
+	.where(and(lte(bonuses.accuredOn, "now()"), gt(bonuses.expiredOn, "now()")))
+);
+
+/* prettier-ignore */
+export const referrBonuses = foraSchema.view("referr_bonuses").as((qb) => qb
+	.select({
+		accountId: sql`${accounts.referrerId}`.as('referr_bonuses"."account_id'),
+		amount: sum(bonuses.amount).as('referr_bonuses"."amount'),
+	})
+	.from(activeBonuses)
+	.innerJoin(accounts, eq(accounts.id, bonuses.accountId))
+	.groupBy(accounts.referrerId),
+);
+
+/* prettier-ignore */
+export const receipts = foraSchema.table("receipts", {
+	couponId: uuid("coupon_id").notNull().references(() => coupons.id),
+
+	filialId: integer("filial_id").notNull(),
+	receiptId: integer("receipt_id").notNull(),
+	fiscalString: text("fiscal_string").notNull(),
+	fiscalNumber: text("fiscal_number").unique(),
+
+	discount: numeric("discount", { precision: 9, scale: 2 }).notNull(),
+	total: numeric("total", { precision: 9, scale: 2 }).notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
 }, (table) => {
 	return {
-		pk: primaryKey({ columns: [table.accountId, table.accuredOn] }),
+		pk: primaryKey({ columns: [table.filialId, table.receiptId] }),
 	};
 });
 
 /* prettier-ignore */
-export const availableBonuses = foraSchema.view("available_bonuses").as((qb) => qb
-	.select({
-		accountId: bonuses.accountId,
-		availableAmount: sql`sum(${bonuses.initialAmount} - ${bonuses.appliedAmount})`
-			.mapWith(String)
-			.as("available_amount"),
-	})
-	.from(bonuses)
-	.where(and(lte(bonuses.accuredOn, "now()"), gt(bonuses.expiredOn, "now()")))
-	.groupBy(bonuses.accountId),
-);
+export const receiptProducts = foraSchema.table("receipt_products", {
+	filialId: integer("filial_id").notNull(),
+	receiptId: integer("receipt_id").notNull(),
+
+	productId: integer("product_id").notNull(),
+	name: text("name").notNull(),
+	unit: text("unit").notNull(),
+
+	quantity: numeric("quantity", { precision: 9, scale: 3 }).notNull(),
+	price: numeric("price", { precision: 9, scale: 2 }).notNull(),
+	value: numeric("value", { precision: 9, scale: 2 }).notNull(),
+}, (table) => {
+	return {
+		pk: primaryKey({ columns: [table.filialId, table.receiptId, table.productId] }),
+		receiptReference: foreignKey({
+			columns: [table.filialId, table.receiptId],
+			foreignColumns: [receipts.filialId, receipts.receiptId],
+		}),
+	};
+});

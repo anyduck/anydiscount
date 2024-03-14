@@ -86,6 +86,77 @@ export async function refreshToken(account) {
 }
 
 /**
+ * @param {Account} account
+ */
+export async function getLastChequeHeadersFast(account) {
+	const header = z.object({
+		filId: z.number(),
+		chequeId: z.number(),
+		created: z.string(),
+		loyaltyFactId: z.number(),
+		sumReg: z.number(),
+		sumBalance: z.number(),
+		identificationString: z.string(),
+		fiscalNumber: z.string().nullable(),
+	});
+	const response = BASE_RESPONSE.extend({
+		sumBalance: z.array(
+			z.object({
+				year: z.number(),
+				month: z.number(),
+				sumBalance: z.number(),
+				headers: z.array(header),
+			}),
+		),
+	});
+
+	/** @type {Body} */
+	const body = { Method: "GetLastChequeHeadersFast", Data: {} };
+	const resp = await request(body, account.userInfo, account.accessToken);
+	return response.parse(await resp.json());
+}
+
+/**
+ * @param {Account} account
+ * @param {import("zod").infer<data>["identities"]} identities
+ */
+export async function getChequesInfos(account, identities) {
+	const data = z.object({
+		identities: z.array(
+			z.object({
+				created: z.string(),
+				filId: z.number(),
+				loyaltyFactId: z.number(),
+			}),
+		),
+	});
+	const line = z.object({
+		lagerId: z.number(),
+		lagerNameUA: z.string(),
+		lagerUnit: z.string(),
+		kolvo: z.number(),
+		priceOut: z.number(),
+		sumLine: z.number(),
+	});
+	const response = BASE_RESPONSE.extend({
+		chequesInfos: z.array(
+			z.object({
+				filId: z.number(),
+				chequeId: z.number(),
+				created: z.string(),
+				sumDiscount: z.number(),
+				chequeLines: z.array(line),
+			}),
+		),
+	});
+
+	/** @type {Body} */
+	const body = { Method: "GetChequesInfos", Data: data.parse({ identities }) };
+	const resp = await request(body, account.userInfo, account.accessToken);
+	return response.parse(await resp.json());
+}
+
+/**
  * @typedef {|
  *   { Method: "CheckUser" | "RegisterUser" | "RefreshToken" | "GetLastChequeHeadersFast"; Data: {} }
  * | { Method: "SendOTP"; Data: { guid: string; phone: string } }
