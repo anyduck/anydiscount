@@ -5,6 +5,7 @@ export const config = {
 };
 
 import { CRON_SECRET } from "$env/static/private";
+import { sleep } from "$lib/retry";
 import { maintenance } from "./maintenance";
 
 /** @type {import("./$types").RequestHandler} */
@@ -38,12 +39,4 @@ function streamUntil(promise) {
 			controller.close();
 		},
 	});
-}
-
-/**
- * @param {number} ms
- * @returns {Promise<void>}
- */
-function sleep(ms) {
-	return new Promise((res) => setTimeout(res, ms));
 }

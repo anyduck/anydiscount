@@ -1,3 +1,5 @@
+import { RetryError, retry, sleep } from "$lib/retry";
+
 const SMSHUB_APIURL = "https://smshub.org/stubs/handler_api.php";
 
 /**
@@ -8,13 +10,8 @@ const SMSHUB_APIURL = "https://smshub.org/stubs/handler_api.php";
  * @returns {Promise<PhoneNumber>}
  */
 export async function getPhoneNumber(apiKey, service, country) {
-	const response = await request(
-		{
-			action: "getNumber",
-			service: SERVICE[service],
-			country: COUNTRY[country],
-		},
-		apiKey,
+	const response = await retry(() =>
+		request({ action: "getNumber", service: SERVICE[service], country: COUNTRY[country] }, apiKey),
 	);
 	const [text, id, number] = response.split(":");
 
@@ -81,7 +78,7 @@ export class PhoneNumber {
 					return code;
 				case "STATUS_WAIT_CODE":
 				case "STATUS_WAIT_RETRY":
-					await new Promise((resolve) => setTimeout(resolve, 5_000));
+					await sleep(5_000);
 					break;
 				case "STATUS_CANCEL":
 				default:
@@ -112,8 +109,13 @@ async function request(query, api_key) {
 	const response = await fetch(url);
 	const text = await response.text();
 
-	if (Object.keys(ERRORS).includes(text.split(":")[0])) {
-		throw new Error(text);
+	const [first] = text.split(":");
+	if (Object.keys(ERRORS).includes(first)) {
+		const message = ERRORS[/** @type {keyof typeof ERRORS} */ (first)];
+		if (first === "NO_NUMBERS") {
+			throw new RetryError(message);
+		}
+		throw new Error(message);
 	}
 	return text;
 }
