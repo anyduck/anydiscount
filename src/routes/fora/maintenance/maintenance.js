@@ -264,7 +264,7 @@ export async function createNewCoupons() {
 				status: isLeaf ? "available" : "template",
 				accountId: account.id,
 				discount: (isLeaf ? 0 : 2 * REFERRAL_REWARD_AMOUNT).toString(),
-				isReferral: !isLeaf,
+				isReferral: true,
 				familyId: sub.familyId,
 				expiredAt: expiredAt,
 			});
