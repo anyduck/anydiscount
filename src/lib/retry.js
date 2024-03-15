@@ -11,6 +11,7 @@ export async function retry(action, interval = 5_000, count = 3) {
 			return await action();
 		} catch (error) {
 			if (error instanceof RetryError) {
+				console.error(error);
 				await sleep(interval);
 			}
 			throw error;

@@ -29,6 +29,7 @@ import {
 } from "$lib/server/fora";
 import { getPhoneNumber } from "$lib/server/smshub";
 import { and, count, eq, gt, gte, lt, not, or, sql } from "drizzle-orm";
+import { RetryError, retry } from "$lib/retry";
 
 export async function maintenance() {
 	await syncCouponInfos();
@@ -204,8 +205,8 @@ export async function createNewCoupons() {
 
 	for (const sub of subs) {
 		if (sub.rootId === null) {
-			const empty = await registerAccount();
-			const root = await registerAccount(empty.sessionId);
+			const empty = await retry(() => registerAccount());
+			const root = await retry(() => registerAccount(empty.sessionId));
 			root.referrerId = empty.id;
 			await db.insert(accounts).values([empty, root]);
 			await db.insert(coupons).values([
@@ -256,7 +257,7 @@ export async function createNewCoupons() {
 		while (index < maxIndex && todo > 0) {
 			const referrer = dfs[index - bubbleStep(sub.height, index)];
 			const isLeaf = referrer.depth === sub.height - 1;
-			const account = await registerAccount(referrer.session_id);
+			const account = await retry(() => registerAccount(referrer.session_id));
 			account.referrerId = referrer.id;
 
 			await db.insert(accounts).values(account);
@@ -411,9 +412,8 @@ async function registerAccount(referrerGuid) {
 
 	const { registered } = await checkUser(account);
 
-	// TODO: gracefull exit or smth? maybe report this
 	if (registered) {
-		throw new Error(`Already registered`);
+		throw new RetryError("Already registered");
 	}
 
 	let data;
@@ -424,11 +424,8 @@ async function registerAccount(referrerGuid) {
 	}
 	const { register, barcode } = data;
 
-	console.log("BARCODE", barcode);
-
-	// TODO: gracefull exit or smth? maybe report this
 	if (!register) {
-		throw new Error(`Couldn't register`);
+		throw new RetryError("Couldn't register");
 	}
 
 	await setBonusToApply(account, guid, `+${phone.number}`);
