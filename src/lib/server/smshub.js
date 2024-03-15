@@ -67,9 +67,15 @@ export class PhoneNumber {
 		this.number = number;
 	}
 
-	/** Returns the SMS code */
-	async getCode() {
-		for (;;) {
+	/**
+	 * Waits for the SMS code in `interval`s
+	 * Cancels the number if `timeout` is reached
+	 * @param {number} timeout
+	 * @param {number} interval
+	 * @returns
+	 */
+	async getCode(timeout = 40_000, interval = 5_000) {
+		for (let i = 0; i < timeout; i += interval) {
 			const response = await request({ action: "getStatus", id: this.id }, this.apiKey);
 			const [status, code] = response.split(":");
 
@@ -78,13 +84,15 @@ export class PhoneNumber {
 					return code;
 				case "STATUS_WAIT_CODE":
 				case "STATUS_WAIT_RETRY":
-					await sleep(5_000);
+					await sleep(interval);
 					break;
 				case "STATUS_CANCEL":
 				default:
 					throw new Error(status);
 			}
 		}
+		await this.cancel();
+		throw new RetryError("getCode timed out");
 	}
 
 	/**
