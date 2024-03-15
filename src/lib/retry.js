@@ -13,8 +13,9 @@ export async function retry(action, interval = 5_000, count = 3) {
 			if (error instanceof RetryError) {
 				console.error(error);
 				await sleep(interval);
+			} else {
+				throw error;
 			}
-			throw error;
 		}
 	}
 	throw new Error("Out Of Retries");
