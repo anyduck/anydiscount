@@ -130,3 +130,12 @@ export const receiptProducts = foraSchema.table("receipt_products", {
 		}),
 	};
 });
+
+/* prettier-ignore */
+export const subscriptions = foraSchema.table("subscriptions", {
+	familyId: uuid("family_id").primaryKey().references(() => families.id),
+	rootId: ean13("root_id").references(() => accounts.id),
+	height: integer("height").notNull(),
+	surplus: integer("surplus").notNull(),
+	expiredAt: timestamp("expired_at", { withTimezone: true }).notNull(),
+});

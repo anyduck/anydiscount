@@ -7,6 +7,11 @@ const APP_API_URL = "https://api.mob.fora.ua/api/2.0/exec/FZGlobal/";
 export const REFERRAL_REWARD_AMOUNT = 50.0;
 export const REFERRAL_MINIMUM_SPEND = 100.0;
 
+const BASE_DATA = z.object({
+	guid: z.string().uuid(),
+	phone: z.string().regex(/\+380\d{9}/),
+});
+
 const BASE_RESPONSE = z.object({
 	error: z.object({
 		errorCode: z.number(),
@@ -71,14 +76,10 @@ export async function getPersonalInfo(account, forceUpdate) {
  * @param {Account} account
  */
 export async function refreshToken(account) {
-	const token = z.object({
-		value: z.string(),
-		expireat: z.number(),
-	});
 	const response = BASE_RESPONSE.extend({
 		tokens: z.object({
-			accessToken: token,
-			refreshToken: token,
+			accessToken: z.object({ value: z.string() }),
+			refreshToken: z.object({ value: z.string() }),
 		}),
 	});
 
@@ -157,6 +158,115 @@ export async function getChequesInfos(account, identities) {
 	const body = { Method: "GetChequesInfos", Data: data.parse({ identities }) };
 	const resp = await request(body, account.userInfo, account.accessToken);
 	return response.parse(await resp.json());
+}
+
+/**
+ * @param {Account} account
+ * @param {string} guid
+ * @param {string} phone
+ */
+export async function sendOTP(account, guid, phone) {
+	const response = BASE_RESPONSE.extend({
+		otpSend: z.boolean(),
+	});
+
+	/** @type {Body} */
+	const body = { Method: "SendOTP", Data: BASE_DATA.parse({ guid, phone }) };
+	const resp = await request(body, account.userInfo, account.accessToken);
+	return response.parse(await resp.json());
+}
+
+/**
+ * @param {Account} account
+ * @param {string} guid
+ * @param {string} phone
+ * @param {string} otpCode
+ */
+export async function confirmationOtp(account, guid, phone, otpCode) {
+	const data = BASE_DATA.extend({
+		otpCode: z.string().length(4),
+	});
+	const response = BASE_RESPONSE.extend({
+		tokens: z.object({
+			accessToken: z.object({ value: z.string() }),
+			refreshToken: z.object({ value: z.string() }),
+		}),
+	});
+
+	/** @type {Body} */
+	const body = { Method: "ConfirmationOtp_V2", Data: data.parse({ guid, phone, otpCode }) };
+	const resp = await request(body, account.userInfo, account.accessToken);
+	return response.parse(await resp.json());
+}
+
+/**
+ * @param {Account} account
+ */
+export async function checkUser(account) {
+	const response = BASE_RESPONSE.extend({
+		barcode: z.string().nullable(),
+		registered: z.boolean(),
+	});
+
+	/** @type {Body} */
+	const body = { Method: "CheckUser", Data: {} };
+	const resp = await request(body, account.userInfo, account.accessToken);
+	return response.parse(await resp.json());
+}
+
+/**
+ * @param {Account} account
+ */
+export async function registerUser(account) {
+	const response = BASE_RESPONSE.extend({
+		barcode: z.string(),
+		register: z.boolean(),
+	});
+
+	/** @type {Body} */
+	const body = { Method: "RegisterUser", Data: {} };
+	const resp = await request(body, account.userInfo, account.accessToken);
+	return response.parse(await resp.json());
+}
+
+/**
+ * @param {Account} account
+ * @param {string} guid
+ * @param {string} phone
+ * @param {string} referrerGuid
+ */
+export async function registerUserReferral(account, guid, phone, referrerGuid) {
+	const data = BASE_DATA.extend({
+		referrerGuid: z.string().uuid(),
+	});
+	const response = BASE_RESPONSE.extend({
+		barcode: z.string(),
+		register: z.boolean(),
+	});
+
+	/** @type {Body} */
+	const body = { Method: "RegisterUserReferral", Data: data.parse({ guid, phone, referrerGuid }) };
+	const resp = await request(body, account.userInfo, account.accessToken);
+	return response.parse(await resp.json());
+}
+
+/**
+ * @param {Account} account
+ * @param {string} guid
+ * @param {string} phone
+ */
+export async function setBonusToApply(account, guid, phone) {
+	const data = BASE_DATA.extend({
+		bonuseCancellationId: z.number(),
+	});
+
+	/** @type {Body} */
+	const body = {
+		Method: "SetBonusToApply",
+		Data: data.parse({ bonuseCancellationId: 2, guid, phone }),
+	};
+	const resp = await request(body, account.userInfo, account.accessToken);
+	return BASE_RESPONSE.parse(await resp.json());
 }
 
 /**

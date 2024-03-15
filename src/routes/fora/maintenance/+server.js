@@ -34,6 +34,7 @@ function streamUntil(promise) {
 				controller.enqueue(dot);
 				await sleep(10 * 1_000);
 			}
+			controller.enqueue(new Uint8Array([33]));
 			controller.close();
 		},
 	});
