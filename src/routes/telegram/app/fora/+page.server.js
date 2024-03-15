@@ -98,15 +98,13 @@ async function fetchViewableCoupons(userId) {
  * @returns {Promise<string | undefined>}
  */
 async function assignCouponByIsReferral(userId, isReferral) {
-	const is_available = and(
-		eq(coupons.status, "available"),
-		isNull(coupons.userId),
-		gt(coupons.expiredAt, sql`now()`),
-	);
+	const is_available = and(eq(coupons.status, "available"), gt(coupons.expiredAt, sql`now()`));
+	const is_same_family = or(eq(coupons.familyId, users.familyId), isNull(coupons.familyId));
 	const select_coupon = db
 		.select({ id: coupons.id })
 		.from(coupons)
-		.where(and(is_available, eq(coupons.isReferral, isReferral)))
+		.innerJoin(users, eq(users.id, userId))
+		.where(and(is_available, is_same_family, eq(coupons.isReferral, isReferral)))
 		.limit(1)
 		.for("update", { skipLocked: true });
 	const data = await db
