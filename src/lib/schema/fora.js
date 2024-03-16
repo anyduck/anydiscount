@@ -69,7 +69,7 @@ export const coupons = foraSchema.table("coupons", {
 export const bonuses = foraSchema.table("bonuses", {
 	accountId: ean13("account_id").primaryKey().references(() => accounts.id),
 	amount: numeric("amount", { precision: 9, scale: 2 }).notNull(),
-	accuredOn: date("accured_on").notNull(),
+	accruedOn: date("accrued_on").notNull(),
 	expiredOn: date("expired_on").notNull(),
 });
 
@@ -77,7 +77,7 @@ export const bonuses = foraSchema.table("bonuses", {
 export const activeBonuses = foraSchema.view("active_bonuses").as((qb) => qb
 	.select({ accountId: bonuses.accountId, amount: bonuses.amount })
 	.from(bonuses)
-	.where(and(lte(bonuses.accuredOn, "now()"), gt(bonuses.expiredOn, "now()")))
+	.where(and(lte(bonuses.accruedOn, "now()"), gt(bonuses.expiredOn, "now()")))
 );
 
 /* prettier-ignore */

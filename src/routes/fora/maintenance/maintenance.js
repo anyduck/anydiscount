@@ -86,13 +86,13 @@ export async function syncCouponInfos() {
 			(r) => parseFloat(r.total) + parseFloat(r.discount) >= REFERRAL_MINIMUM_SPEND,
 		);
 		if (coupon.isReferral && rewardReceipts.length) {
-			const accuredOn = getDateAterTomorrow(
+			const accruedOn = getDateAterTomorrow(
 				rewardReceipts.reduce((min, r) => (min.createdAt < r.createdAt ? min : r)).createdAt,
 			);
-			const expiredOn = getNext3Month(accuredOn);
+			const expiredOn = getNext3Month(accruedOn);
 			_bonuses.push({
 				accountId: account.id,
-				accuredOn: accuredOn.toISOString(),
+				accruedOn: accruedOn.toISOString(),
 				expiredOn: expiredOn.toISOString(),
 				amount: REFERRAL_REWARD_AMOUNT.toString(),
 			});
