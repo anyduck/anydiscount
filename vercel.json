@@ -1,0 +1,8 @@
+{
+    "crons": [
+        {
+            "path": "/fora/maintenance",
+            "schedule": "0 5 * * *"
+        }
+    ]
+}
