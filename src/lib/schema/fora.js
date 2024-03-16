@@ -43,11 +43,10 @@ export const couponStatus = pgEnum('fora"."coupon_status', [
 	"template",
 	"available",
 	"assigned",
-	"reported",
-	"awaiting_refund",
-	"refunded",
-	"awaiting_receipt",
+	"hidden",
 	"applied",
+	"reported",
+	"canceled",
 ]);
 
 /* prettier-ignore */

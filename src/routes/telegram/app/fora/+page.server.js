@@ -85,7 +85,7 @@ async function fetchViewableCoupons(userId) {
 		.where(
 			and(
 				eq(coupons.userId, userId),
-				inArray(coupons.status, ["assigned", "awaiting_receipt"]),
+				inArray(coupons.status, ["assigned", "hidden"]),
 				gt(coupons.expiredAt, sql`now()`),
 			),
 		);

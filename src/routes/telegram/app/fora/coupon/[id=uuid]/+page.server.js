@@ -32,7 +32,7 @@ export const actions = {
 
 		const data = await db
 			.update(coupons)
-			.set({ status: "awaiting_receipt" })
+			.set({ status: "hidden" })
 			.where(and(eq(coupons.id, params.id), eq(coupons.status, "assigned")))
 			.returning({ id: coupons.id });
 
@@ -55,7 +55,7 @@ async function fetchCouponWithAccount(couponId) {
 		.from(coupons)
 		.innerJoin(accounts, eq(accounts.id, coupons.accountId))
 		.innerJoin(devices, eq(devices.id, accounts.deviceId))
-		.where(and(eq(coupons.id, couponId), inArray(coupons.status, ["assigned", "awaiting_receipt"])))
+		.where(and(eq(coupons.id, couponId), inArray(coupons.status, ["assigned", "hidden"])))
 		.limit(1);
 	return data.length ? data[0] : undefined;
 }

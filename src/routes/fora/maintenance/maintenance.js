@@ -28,7 +28,7 @@ import {
 	setBonusToApply,
 } from "$lib/server/fora";
 import { getPhoneNumber } from "$lib/server/smshub";
-import { and, count, eq, gt, gte, lt, not, or, sql } from "drizzle-orm";
+import { and, count, eq, gt, gte, inArray, lt, not, or, sql } from "drizzle-orm";
 import { RetryError, retry } from "$lib/retry";
 
 export async function maintenance() {
@@ -43,9 +43,10 @@ export async function syncCouponInfos() {
 				id: coupons.id,
 				status: coupons.status,
 				familyId: coupons.familyId,
-				totalDiscount: coupons.discount,
+				discount: coupons.discount,
 				isReferral: coupons.isReferral,
 				createdAt: coupons.createdAt,
+				expiredAt: coupons.expiredAt,
 			},
 			account: {
 				id: accounts.id,
@@ -61,7 +62,7 @@ export async function syncCouponInfos() {
 		.from(coupons)
 		.innerJoin(accounts, eq(accounts.id, coupons.accountId))
 		.innerJoin(devices, eq(devices.id, accounts.deviceId))
-		.where(eq(coupons.status, "awaiting_receipt"));
+		.where(inArray(coupons.status, ["assigned", "hidden"]));
 
 	/** @type {typeof bonuses.$inferInsert[]} */
 	const _bonuses = [];
@@ -106,15 +107,22 @@ export async function syncCouponInfos() {
 			});
 		}
 
-		// Update coupon status
+		// Update coupon status and recreate it in case of cancellation
 		let status = coupon.status;
+		const newIsReferer = coupon.isReferral && !rewardReceipts.length;
 		const usedDiscount = data.receipts.reduce((sum, r) => sum + parseFloat(r.discount), 0);
-		if (coupon.isReferral && rewardReceipts.length) {
-			status = "applied";
-		} else if (!coupon.isReferral && usedDiscount > 0.8 * parseFloat(coupon.totalDiscount)) {
-			status = "applied";
+		if (parseFloat(coupon.discount) - usedDiscount > 10 || newIsReferer) {
+			_coupons.push({
+				status: "template",
+				familyId: coupon.familyId,
+				accountId: account.id,
+				isReferral: newIsReferer,
+				discount: "0",
+				expiredAt: coupon.expiredAt,
+			});
+			status = "canceled";
 		} else {
-			status = "assigned";
+			status = "applied";
 		}
 		await db.update(coupons).set({ status }).where(eq(coupons.id, coupon.id));
 	}

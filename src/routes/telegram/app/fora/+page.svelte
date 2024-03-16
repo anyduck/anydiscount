@@ -63,7 +63,7 @@
 			<a
 				slot="right"
 				class="action"
-				class:marked={coupon.status === "awaiting_receipt"}
+				class:marked={coupon.status === "hidden"}
 				data-sveltekit-preload-data="false"
 				href="fora/coupon/{coupon.id}">Перейти</a
 			>
