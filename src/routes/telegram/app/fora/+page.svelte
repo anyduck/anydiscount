@@ -75,23 +75,29 @@
 
 <style>
 	.action {
-		background-color: var(--color-button-background);
-		color: var(--color-button-text);
+		background-color: var(--color-lime-500);
+		color: var(--color-white);
 		padding: 0.5rem;
 		border-radius: 1rem;
 		font-size: 1rem;
 		line-height: 1rem;
-		font-weight: 700;
+		font-weight: var(--fw-bold);
+		box-shadow: 0 0.25rem 0 var(--color-surface);
 	}
 	a {
 		text-decoration: none;
 	}
 	button {
+		cursor: pointer;
 		outline: none;
 		border: none;
 	}
 	.marked,
 	button:disabled {
 		background-color: var(--color-hint);
+		pointer-events: none;
+		cursor: not-allowed;
+		opacity: 0.7;
+		box-shadow: none;
 	}
 </style>

@@ -22,8 +22,8 @@
 		window.Telegram.WebApp.MainButton.onClick(mark);
 		const styles = getComputedStyle(document.body);
 		window.Telegram.WebApp.MainButton.setParams({
-			color: styles.getPropertyValue("--color-button-background"),
-			text_color: styles.getPropertyValue("--color-button-text"),
+			color: styles.getPropertyValue("--color-lime-500"),
+			text_color: styles.getPropertyValue("--color-white"),
 			text: "ПОЗНАЧИТИ ВИКОРИСТАНИМ",
 			is_visible: isAssigned,
 		});
@@ -57,7 +57,7 @@
 	.section {
 		padding: 1rem;
 		border-radius: 0.5rem;
-		background-color: var(--color-section);
+		background-color: var(--color-white);
 	}
 	.barcode {
 		padding: 2rem calc(50% - 100px);
@@ -72,7 +72,7 @@
 		position: absolute;
 		width: 2rem;
 		height: 2rem;
-		background-color: var(--color-background);
+		background-color: var(--color-surface);
 		border-radius: 1rem;
 		bottom: -0.9rem;
 	}
