@@ -86,7 +86,7 @@ export async function syncCouponInfos() {
 			(r) => parseFloat(r.total) + parseFloat(r.discount) >= REFERRAL_MINIMUM_SPEND,
 		);
 		if (coupon.isReferral && rewardReceipts.length) {
-			const accuredOn = getNextDate(
+			const accuredOn = getDateAterTomorrow(
 				rewardReceipts.reduce((min, r) => (min.createdAt < r.createdAt ? min : r)).createdAt,
 			);
 			const expiredOn = getNext3Month(accuredOn);
@@ -445,7 +445,7 @@ async function registerAccount(referrerGuid) {
  * @param {Date} date
  * @returns {Date}
  */
-function getNextDate(date) {
+function getDateAterTomorrow(date) {
 	return new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
 }
 
