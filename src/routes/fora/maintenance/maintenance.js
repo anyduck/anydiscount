@@ -454,7 +454,7 @@ async function registerAccount(referrerGuid) {
  * @returns {Date}
  */
 function getDateAterTomorrow(date) {
-	return new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
+	return new Date(date.getFullYear(), date.getMonth(), date.getDate() + 2);
 }
 
 /**
