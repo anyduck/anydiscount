@@ -352,7 +352,7 @@ async function getReceiptsWithProducts(account, couponId, startDate) {
 		}
 	}
 
-	if (!identities) {
+	if (!identities.length) {
 		return { receipts: [], products: [] };
 	}
 
