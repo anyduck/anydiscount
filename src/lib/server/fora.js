@@ -247,7 +247,19 @@ export async function registerUserReferral(account, guid, phone, referrerGuid) {
 	/** @type {Body} */
 	const body = { Method: "RegisterUserReferral", Data: data.parse({ guid, phone, referrerGuid }) };
 	const resp = await request(body, account.userInfo, account.accessToken);
-	return response.parse(await resp.json());
+	// TODO: why is this error happening? SyntaxError: Unexpected end of JSON input
+	const text = await resp.text();
+	try {
+		return response.parse(JSON.parse(text));
+	} catch (error) {
+		if (error instanceof SyntaxError) {
+			console.error(error.message, text);
+		} else {
+			throw error;
+		}
+	}
+	const user = await checkUser(account);
+	return response.parse({ ...user, register: user.registered });
 }
 
 /**
