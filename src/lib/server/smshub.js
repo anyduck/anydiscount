@@ -120,7 +120,7 @@ async function request(query, api_key) {
 	const [first] = text.split(":");
 	if (Object.keys(ERRORS).includes(first)) {
 		const message = ERRORS[/** @type {keyof typeof ERRORS} */ (first)];
-		if (first === "NO_NUMBERS") {
+		if (["NO_NUMBERS", "SERVER_ERROR", "ERROR_SQL"].includes(first)) {
 			throw new RetryError(message);
 		}
 		throw new Error(message);
