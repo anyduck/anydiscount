@@ -17,7 +17,7 @@
 		margin-block: 0.5rem;
 		border-radius: 0.5rem;
 		padding: 0.5rem;
-		background-color: var(--color-white);
+		background-color: var(--color-surface-section);
 	}
 	.left {
 		flex-grow: 1;
@@ -28,7 +28,7 @@
 		color: var(--color-text);
 	}
 	.right {
-		border-left: var(--color-surface) dashed 2px;
+		border-left: var(--color-surface-ground) dashed 2px;
 		min-width: 30%;
 		display: flex;
 		justify-content: center;

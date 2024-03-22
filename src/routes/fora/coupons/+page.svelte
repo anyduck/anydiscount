@@ -76,13 +76,13 @@
 <style>
 	.action {
 		background-color: var(--color-lime-500);
-		color: var(--color-white);
+		color: var(--color-text-accent);
 		padding: 0.5rem;
 		border-radius: 1rem;
 		font-size: 1rem;
 		line-height: 1rem;
 		font-weight: var(--fw-bold);
-		box-shadow: 0 0.25rem 0 var(--color-surface);
+		box-shadow: 0 0.25rem 0 var(--color-surface-ground);
 	}
 	a {
 		text-decoration: none;

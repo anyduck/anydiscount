@@ -1,10 +1,9 @@
 :root {
 	/* colors */
-	--color-surface: #f1f1f1;
-	--color-text: #161433;
-	--color-hint: #999999;
-
-	--color-white: #ffffff;
+	--color-slate-100: #f1f5f9;
+	--color-slate-200: #e2e8f0;
+	--color-stale-400: #94a3b8;
+	--color-slate-900: #0f172a;
 	--color-lime-300: #bef264;
 	--color-lime-400: #a3e635;
 	--color-lime-500: #84cc16;
@@ -16,29 +15,26 @@
 	--ff-base: "IBM Plex Sans", sans-serif;
 	--ff-accent: "Young Serif", serif;
 
-	/* font weights */
-	--fw-regular: 500;
-	--fw-bold: 600;
-	--fw-black: 700;
-
-	/* font sizes */
-	--fs-300: 1rem;
-	--fs-400: 1.125rem;
-	--fs-500: 1.375rem;
-	--fs-600: 1.75rem;
-	--fs-700: 2.25rem;
+	/* theme */
+	--color-accent: var(--color-lime-500);
+	--color-text: var(--color-slate-900);
+	--color-text-accent: white;
+	--color-hint: var(--color-stale-400);
+	--color-surface-ground: var(--color-slate-100);
+	--color-surface-section: white;
+	--color-surface-hover: var(--color-slate-200);
 }
 
 body {
 	margin: 0;
-	background: var(--color-surface);
+	background: var(--color-surface-ground);
 	color: var(--color-text);
 	font-family: var(--ff-base);
-	font-size: var(--fs-300);
 }
 
 .skeleton {
 	color: transparent !important;
+	user-select: none;
 	border-radius: 1rem;
 	animation: skeleton-loading 1s linear infinite alternate;
 }
