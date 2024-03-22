@@ -1,22 +1,28 @@
-import { redirect } from "@sveltejs/kit";
-import { AUTH_SECRET } from "$env/static/private";
-import { jwtVerify } from "jose";
-
-const AUTH_KEY = new TextEncoder().encode(AUTH_SECRET);
+import { COOKIE_NAME, verifySession } from "$lib/server/auth";
 
 /** @type {import('@sveltejs/kit').Handle} */
 export async function handle({ event, resolve }) {
-	const token = event.cookies.get("token") ?? "";
+	const session = event.cookies.get(COOKIE_NAME);
 
-	try {
-		const result = await jwtVerify(token, AUTH_KEY);
-		event.locals.userId = result.payload.sub;
-	} catch {
-		const pathname = event.url.pathname;
-		if (pathname !== "/telegram/app/auth" && pathname.startsWith("/telegram/app")) {
-			redirect(302, `/telegram/app/auth?return_to=${pathname}`);
-		}
+	if (!session) {
+		return resolve(event);
 	}
 
-	return await resolve(event);
+	const { userId, newSession } = await verifySession(session);
+
+	event.locals.userId = userId;
+
+	if (!userId) {
+		event.cookies.delete(COOKIE_NAME, { path: "/" });
+	} else if (newSession) {
+		event.cookies.set(COOKIE_NAME, newSession, {
+			path: "/",
+			httpOnly: true,
+			secure: true,
+			sameSite: "lax",
+			maxAge: 30 * 24 * 3600,
+		});
+	}
+
+	return resolve(event);
 }
