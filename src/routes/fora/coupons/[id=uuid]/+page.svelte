@@ -1,5 +1,5 @@
 <script>
-	import { enhance } from "$app/forms";
+	import { browser } from "$app/environment";
 	import Barcode from "$lib/components/Barcode.svelte";
 
 	/** @type {import('./$types').PageData} */
@@ -12,14 +12,11 @@
 <div class="separator"></div>
 <div class="section info">
 	Баланс:
-	{#await data.streamed.balance}
+	{#if browser && !navigator.onLine}
 		<span class="balance skeleton">00.00 грн.</span>
-	{:then balance}
-		<span class="balance">{balance} грн.</span>
-	{/await}
-	<form action="?/mark" method="post" use:enhance>
-		<input type="submit" disabled={data.coupon.status !== "hidden"} />
-	</form>
+	{:else}
+		<span class="balance">{data.personalInfo.Bonus.bonusBalanceAmount} грн.</span>
+	{/if}
 </div>
 
 <style>
