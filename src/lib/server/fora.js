@@ -75,6 +75,26 @@ export async function getPersonalInfo(account, forceUpdate) {
 /**
  * @param {Account} account
  */
+export async function getQRKeys(account) {
+	const response = BASE_RESPONSE.extend({
+		keys: z.object({
+			posKey: z.object({
+				id: z.number(),
+				pemKey: z.string(),
+				expireAt: z.string().datetime(),
+			}),
+		}),
+	});
+
+	/** @type {Body} */
+	const body = { Data: {}, Method: "GetQRKeys" };
+	const resp = await request(body, account.userInfo, account.accessToken);
+	return response.parse(await resp.json());
+}
+
+/**
+ * @param {Account} account
+ */
 export async function refreshToken(account) {
 	const response = BASE_RESPONSE.extend({
 		tokens: z.object({
@@ -283,7 +303,7 @@ export async function setBonusToApply(account, guid, phone) {
 
 /**
  * @typedef {|
- *   { Method: "CheckUser" | "RegisterUser" | "RefreshToken" | "GetLastChequeHeadersFast"; Data: {} }
+ *   { Method: "CheckUser" | "RegisterUser" | "RefreshToken" | "GetLastChequeHeadersFast" | "GetQRKeys"; Data: {} }
  * | { Method: "SendOTP"; Data: { guid: string; phone: string } }
  * | { Method: "ConfirmationOtp_V2"; Data: { otpCode: string; guid: string; phone: string; captcha?: string } }
  * | { Method: "RegisterUserReferral"; Data: { referrerGuid: string; guid: string; phone: string } }

@@ -38,7 +38,6 @@
 </header>
 
 <form method="post" use:enhance>
-	<input type="hidden" name="status" value="assigned" />
 	{#each coupons as coupon (coupon.id)}
 		<Coupon>
 			<svelte:fragment slot="left">
@@ -52,7 +51,9 @@
 				<br />
 				Дійсний до {formatter.format(coupon.expiredAt)}
 			</svelte:fragment>
-			<button slot="right" formaction="coupons/{coupon.id}">Перейти</button>
+			<svelte:fragment slot="right">
+				<button formaction="coupons/{coupon.id}?/assign">Перейти</button>
+			</svelte:fragment>
 		</Coupon>
 	{:else}
 		<h3>Обраних купонів не знайдено</h3>
