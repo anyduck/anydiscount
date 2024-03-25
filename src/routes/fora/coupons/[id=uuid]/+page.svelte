@@ -1,13 +1,33 @@
 <script>
 	import { browser } from "$app/environment";
 	import Barcode from "$lib/components/Barcode.svelte";
+	import Qrcode from "$lib/components/Qrcode.svelte";
+	import { encodeLoyaltyData, generateQRString } from "$lib/fora/qrcode";
+	import { onMount } from "svelte";
 
 	/** @type {import('./$types').PageData} */
 	export let data;
+
+	const [posId, posPEM] = [data.keys.posKey.id, data.keys.posKey.pemKey];
+	const [guid, coupons] = [data.sessionId, data.personalInfo.Coupons];
+	let loyaltyData = encodeLoyaltyData(1, guid, coupons);
+
+	onMount(() => {
+		const interval = setInterval(() => {
+			loyaltyData = encodeLoyaltyData(1, guid, coupons);
+		}, 60_000);
+		return () => clearInterval(interval);
+	});
 </script>
 
 <div class="section barcode">
-	<Barcode ean_13={data.coupon.accountId.replaceAll("-", "")} />
+	{#await generateQRString(posId, posPEM, loyaltyData)}
+		<svg width="200px" height="200px"></svg>
+	{:then text}
+		<Qrcode {text} />
+	{:catch}
+		<Barcode ean_13={data.coupon.accountId.replaceAll("-", "")} />
+	{/await}
 </div>
 <div class="separator"></div>
 <div class="section info">

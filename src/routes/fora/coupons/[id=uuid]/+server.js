@@ -13,6 +13,7 @@ export async function GET({ locals, params }) {
 	const [data] = await db
 		.select({
 			coupon: coupons,
+			sessionId: accounts.sessionId,
 			accessToken: accounts.accessToken,
 			refreshToken: accounts.refreshToken,
 			device: devices,
@@ -41,12 +42,13 @@ export async function GET({ locals, params }) {
 		getPersonalInfo(account, true),
 	]);
 
-	return json({ coupon: data.coupon, keys, personalInfo });
+	return json({ coupon: data.coupon, sessionId: data.sessionId, keys, personalInfo });
 }
 
 /**
  * @typedef {Object} Data
  * @property {Omit<typeof import("$lib/schema/fora").coupons.$inferSelect, never>} coupon
+ * @property {string} sessionId
  * @property {Awaited<ReturnType<import("$lib/server/fora").getQRKeys>>["keys"]} keys
  * @property {Awaited<ReturnType<import("$lib/server/fora").getPersonalInfo>>["personalInfo"]} personalInfo
  */
