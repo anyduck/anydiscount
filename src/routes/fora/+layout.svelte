@@ -1,6 +1,6 @@
 <script>
 	import { page } from "$app/stores";
-	import hisotry from "$lib/assets/history.svg?raw";
+	import history from "$lib/assets/history.svg?raw";
 	import receipt from "$lib/assets/receipt.svg?raw";
 	import ticket from "$lib/assets/ticket.svg?raw";
 </script>
@@ -14,8 +14,8 @@
 		<a href="/fora/receipts" class:active={$page.route.id === "/fora/receipts"}>
 			{@html receipt}<span>Чеки</span>
 		</a>
-		<a href="/fora/hisotry" class:active={$page.route.id === "/fora/hisotry"}>
-			{@html hisotry}<span>Історія</span>
+		<a href="/fora/history" class:active={$page.route.id === "/fora/history"}>
+			{@html history}<span>Історія</span>
 		</a>
 	</nav>
 </main>

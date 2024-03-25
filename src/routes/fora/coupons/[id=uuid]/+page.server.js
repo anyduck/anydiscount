@@ -2,7 +2,7 @@ import { coupons } from "$lib/schema/fora";
 import { users } from "$lib/schema/public";
 import { db } from "$lib/server/db";
 import { error, redirect } from "@sveltejs/kit";
-import { and, eq, isNull, or } from "drizzle-orm";
+import { and, eq, isNull, or, sql } from "drizzle-orm";
 
 /** @type {import('./$types').Actions} */
 export const actions = {
@@ -24,7 +24,7 @@ export const actions = {
 
 		const [coupon] = await db
 			.update(coupons)
-			.set({ status: "assigned", userId: locals.userId })
+			.set({ status: "assigned", userId: locals.userId, assignedAt: sql`now()` })
 			.where(and(eq(coupons.id, params.id), isAvailable))
 			.returning({ id: coupons.id });
 

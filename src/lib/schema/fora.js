@@ -56,6 +56,7 @@ export const coupons = foraSchema.table("coupons", {
 	status: couponStatus("status").notNull(),
 	familyId: uuid("family_id").references(() => families.id),
 	userId: uuid("user_id").references(() => users.id),
+	assignedAt: timestamp("assigned_at", { withTimezone: true }),
 
 	accountId: ean13("account_id").notNull().references(() => accounts.id),
 	discount: numeric("discount", { precision: 9, scale: 2 }).notNull(),
