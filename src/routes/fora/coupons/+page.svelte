@@ -5,6 +5,8 @@
 	/** @type {import('./$types').PageData} */
 	export let data;
 
+	const minimumSpend = data.REFERRAL_MINIMUM_SPEND.toString();
+
 	let filter = -1;
 
 	$: coupons = filterCoupons(filter, data.coupons);
@@ -21,11 +23,6 @@
 			(c) => parseFloat(c.discount) >= filter && parseFloat(c.discount) < filter + 50,
 		);
 	}
-
-	const formatter = new Intl.DateTimeFormat("uk-UA", {
-		day: "numeric",
-		month: "long",
-	});
 </script>
 
 <header>
@@ -38,22 +35,9 @@
 </header>
 
 <form method="post" use:enhance>
-	{#each coupons as coupon (coupon.id)}
-		<Coupon>
-			<svelte:fragment slot="left">
-				{coupon.discount} грн.
-				<br />
-				{#if coupon.isReferral}
-					Покупка понад {data.REFERRAL_MINIMUM_SPEND} грн.
-				{:else}
-					Немає мінімальної суми
-				{/if}
-				<br />
-				Дійсний до {formatter.format(coupon.expiredAt)}
-			</svelte:fragment>
-			<svelte:fragment slot="right">
-				<button formaction="coupons/{coupon.id}?/assign">Перейти</button>
-			</svelte:fragment>
+	{#each coupons as { id, discount, isReferral, expiredAt } (id)}
+		<Coupon {discount} minimumSpend={isReferral ? minimumSpend : ""} {expiredAt}>
+			<button formaction="coupons/{id}?/assign">Перейти</button>
 		</Coupon>
 	{:else}
 		<h3>Обраних купонів не знайдено</h3>
