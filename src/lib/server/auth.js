@@ -1,21 +1,55 @@
-import { AUTH_SECRET, GOOGLE_CLIENT_ID, VITE_BASE_URL } from "$env/static/private";
+import { AUTH_SECRET, GOOGLE_CLIENT_ID, VERCEL_URL } from "$env/static/private";
 import { accounts, users } from "$lib/schema/public";
 import { db } from "$lib/server/db";
 import { and, eq } from "drizzle-orm";
 
 import { TimeSpan, createDate } from "oslo";
+import { base64url } from "oslo/encoding";
 import { createJWT, validateJWT } from "oslo/jwt";
 import { OAuth2Client } from "oslo/oauth2";
 
 const AUTH_KEY = new TextEncoder().encode(AUTH_SECRET);
-export const COOKIE_NAME = "auth_session";
 
 export const google = new OAuth2Client(
 	GOOGLE_CLIENT_ID,
 	"https://accounts.google.com/o/oauth2/v2/auth",
 	"https://oauth2.googleapis.com/token",
-	{ redirectURI: `${VITE_BASE_URL}/auth/google/callback` },
+	{ redirectURI: `https://${VERCEL_URL}/auth/google/callback` },
 );
+
+/**
+ * Generates state for OAuth2 with payload
+ * @param {string} payload
+ * @returns {Promise<string>}
+ */
+export async function generateState(payload) {
+	const nonce = new Uint8Array(32);
+	crypto.getRandomValues(nonce);
+
+	const data = new TextEncoder().encode(payload);
+
+	const algo = { name: "HMAC", hash: "SHA-256" };
+	const key = await crypto.subtle.importKey("raw", AUTH_KEY, algo, false, ["sign"]);
+	const hmac = new Uint8Array(await crypto.subtle.sign(algo, key, data));
+
+	return [nonce, data, hmac].map((i) => base64url.encode(i)).join(".");
+}
+
+/**
+ * Verifies and extracts payload from OAtuh2 state
+ * @param {string} state
+ * @returns {Promise<string | undefined>}
+ */
+export async function verifyState(state) {
+	const [, data, hmac] = state.split(".").map((i) => base64url.decode(i));
+
+	const algo = { name: "HMAC", hash: "SHA-256" };
+	const key = await crypto.subtle.importKey("raw", AUTH_KEY, algo, false, ["verify"]);
+	if (await crypto.subtle.verify(algo, key, hmac, data)) {
+		return new TextDecoder().decode(data);
+	}
+	return undefined;
+}
 
 /**
  * @param {string} providerId

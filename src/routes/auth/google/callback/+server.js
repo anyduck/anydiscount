@@ -1,5 +1,5 @@
 import { GOOGLE_CLIENT_SECRET } from "$env/static/private";
-import { COOKIE_NAME, createSession, getOrCreateUserByProvider, google } from "$lib/server/auth";
+import { createSession, getOrCreateUserByProvider, google, verifyState } from "$lib/server/auth";
 import { error, redirect } from "@sveltejs/kit";
 import { parseJWT } from "oslo/jwt";
 
@@ -41,13 +41,7 @@ export async function GET({ cookies, getClientAddress, url }) {
 	});
 	const session = await createSession(userId);
 
-	cookies.set(COOKIE_NAME, session, {
-		path: "/",
-		httpOnly: true,
-		secure: true,
-		sameSite: "lax",
-		maxAge: 30 * 24 * 3600,
-	});
+	cookies.set("auth_session", session, { path: "/", maxAge: 30 * 24 * 3600 });
 
-	redirect(302, "/app");
+	redirect(302, (await verifyState(state)) ?? "/");
 }
