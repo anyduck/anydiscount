@@ -131,8 +131,10 @@ export async function syncCouponInfos() {
 		await db.insert(receipts).values(_receipts).onConflictDoNothing();
 		await db.insert(receiptProducts).values(_receiptProducts).onConflictDoNothing();
 	}
-	if (_bonuses.length && _coupons.length) {
+	if (_bonuses.length) {
 		await db.insert(bonuses).values(_bonuses).onConflictDoNothing();
+	}
+	if (_coupons.length) {
 		await db.insert(coupons).values(_coupons);
 	}
 
