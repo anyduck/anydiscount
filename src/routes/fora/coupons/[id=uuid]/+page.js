@@ -10,7 +10,7 @@ export async function load({ fetch, url }) {
 	if (!response.ok) {
 		error(404, "Not Found");
 	}
-	if (browser) {
+	if (browser && "caches" in window) {
 		const cache = await caches.open(CACHE);
 		const date = response.headers.get("date");
 		if (new Date(date ?? 0) < notBeforeDate()) {
