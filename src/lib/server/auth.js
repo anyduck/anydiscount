@@ -1,4 +1,4 @@
-import { AUTH_SECRET, GOOGLE_CLIENT_ID, VERCEL_URL } from "$env/static/private";
+import { AUTH_SECRET, GOOGLE_CLIENT_ID, VITE_PUBLIC_URL } from "$env/static/private";
 import { accounts, users } from "$lib/schema/public";
 import { db } from "$lib/server/db";
 import { and, eq } from "drizzle-orm";
@@ -14,7 +14,7 @@ export const google = new OAuth2Client(
 	GOOGLE_CLIENT_ID,
 	"https://accounts.google.com/o/oauth2/v2/auth",
 	"https://oauth2.googleapis.com/token",
-	{ redirectURI: `https://${VERCEL_URL}/auth/google/callback` },
+	{ redirectURI: `${VITE_PUBLIC_URL}/auth/google/callback` },
 );
 
 /**
