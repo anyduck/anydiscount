@@ -1,21 +1,25 @@
 <script>
 	import { page } from "$app/stores";
+	import avatar from "$lib/assets/avatar.svg?raw";
 	import history from "$lib/assets/history.svg?raw";
-	import receipt from "$lib/assets/receipt.svg?raw";
+	import home from "$lib/assets/home.svg?raw";
 	import ticket from "$lib/assets/ticket.svg?raw";
 </script>
 
 <main>
 	<slot />
 	<nav>
+		<a href="/">
+			{@html home}<span>Головна</span>
+		</a>
 		<a href="/fora/coupons" class:active={$page.route.id === "/fora/coupons"}>
 			{@html ticket}<span>Купони</span>
 		</a>
-		<a href="/fora/receipts" class:active={$page.route.id === "/fora/receipts"}>
-			{@html receipt}<span>Чеки</span>
-		</a>
 		<a href="/fora/history" class:active={$page.route.id === "/fora/history"}>
 			{@html history}<span>Історія</span>
+		</a>
+		<a href="/fora/profile" class:active={$page.route.id === "/fora/profile"}>
+			{@html avatar}<span>Профіль</span>
 		</a>
 	</nav>
 </main>
