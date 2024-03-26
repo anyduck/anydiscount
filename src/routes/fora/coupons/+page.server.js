@@ -2,13 +2,13 @@ import { coupons } from "$lib/schema/fora";
 import { users } from "$lib/schema/public";
 import { db } from "$lib/server/db";
 import { REFERRAL_MINIMUM_SPEND } from "$lib/server/fora";
-import { redirect } from "@sveltejs/kit";
+import { error } from "@sveltejs/kit";
 import { and, eq, gt, isNull, or, sql } from "drizzle-orm";
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ locals }) {
 	if (!locals.userId) {
-		redirect(302, "/auth");
+		error(401, "Unauthorized");
 	}
 
 	const available = await db
