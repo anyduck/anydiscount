@@ -113,7 +113,7 @@ export async function syncCouponInfos() {
 		const usedDiscount = data.receipts.reduce((sum, r) => sum + parseFloat(r.discount), 0);
 		if (parseFloat(coupon.discount) - usedDiscount > 10 || newIsReferer) {
 			_coupons.push({
-				status: "template",
+				status: "available",
 				familyId: coupon.familyId,
 				accountId: account.id,
 				isReferral: newIsReferer,
