@@ -238,7 +238,10 @@ export async function createNewCoupons() {
 				},
 			]);
 			sub.rootId = root.id;
-			await db.update(subscriptions).set({ rootId: root.id });
+			await db
+				.update(subscriptions)
+				.set({ rootId: root.id })
+				.where(eq(subscriptions.familyId, sub.familyId));
 		}
 
 		const data = await db.execute(sql`
@@ -287,7 +290,10 @@ export async function createNewCoupons() {
 			}
 		}
 		if (index === maxIndex) {
-			await db.update(subscriptions).set({ rootId: null });
+			await db
+				.update(subscriptions)
+				.set({ rootId: null })
+				.where(eq(subscriptions.familyId, sub.familyId));
 		}
 	}
 }
