@@ -23,8 +23,11 @@
 
 	function notBeforeDate() {
 		const today = new Date();
-		today.setUTCDate(today.getUTCDate() - 1);
-		today.setUTCHours(4); // Maintenance ending hours
+		const MAINTENANCE_HOUR = 4;
+		if (today.getUTCHours() < MAINTENANCE_HOUR) {
+			today.setUTCDate(today.getUTCDate() - 1);
+		}
+		today.setUTCHours(MAINTENANCE_HOUR);
 		return today;
 	}
 
