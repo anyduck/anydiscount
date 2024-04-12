@@ -5,6 +5,12 @@ import { Account, getPersonalInfo, getQRKeys, refreshToken } from "$lib/server/f
 import { error, json } from "@sveltejs/kit";
 import { and, eq, inArray } from "drizzle-orm";
 
+/**
+ * @typedef {Object} Response
+ * @property {Awaited<ReturnType<import("$lib/server/fora").getQRKeys>>["keys"]} keys
+ * @property {Awaited<ReturnType<import("$lib/server/fora").getPersonalInfo>>["personalInfo"]} personalInfo
+ */
+
 /** @type {import('./$types').RequestHandler} */
 export async function GET({ locals, params }) {
 	if (!locals.userId) {
@@ -12,8 +18,7 @@ export async function GET({ locals, params }) {
 	}
 	const [data] = await db
 		.select({
-			coupon: coupons,
-			sessionId: accounts.sessionId,
+			id: accounts.id,
 			accessToken: accounts.accessToken,
 			refreshToken: accounts.refreshToken,
 			device: devices,
@@ -33,7 +38,7 @@ export async function GET({ locals, params }) {
 	}
 
 	const account = await refreshAccount(
-		data.coupon.accountId,
+		data.id,
 		new Account(data.accessToken, data.refreshToken, data.device),
 	);
 
@@ -42,16 +47,8 @@ export async function GET({ locals, params }) {
 		getPersonalInfo(account, true),
 	]);
 
-	return json({ coupon: data.coupon, sessionId: data.sessionId, keys, personalInfo });
+	return json({ keys, personalInfo });
 }
-
-/**
- * @typedef {Object} Data
- * @property {Omit<typeof import("$lib/schema/fora").coupons.$inferSelect, never>} coupon
- * @property {string} sessionId
- * @property {Awaited<ReturnType<import("$lib/server/fora").getQRKeys>>["keys"]} keys
- * @property {Awaited<ReturnType<import("$lib/server/fora").getPersonalInfo>>["personalInfo"]} personalInfo
- */
 
 /**
  * Refreshes account tokens in place and syncs them to the database.

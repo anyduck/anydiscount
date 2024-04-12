@@ -28,21 +28,11 @@ self.addEventListener("fetch", (event) => {
 	if (event.request.method !== "GET") return;
 
 	async function respond() {
-		const url = new URL(event.request.url);
-		if (ASSETS.includes(url.pathname)) {
-			const cache = await caches.open(`assets-${version}`);
-			const response = await cache.match(url.pathname);
-			if (response) return response;
-		}
-
 		try {
 			return await fetch(event.request);
 		} catch (error) {
-			if (url.pathname.startsWith("/fora")) {
-				const cache = await caches.open(`fora-${version}`);
-				const response = await cache.match(event.request);
-				if (response) return response;
-			}
+			const response = await caches.match(event.request);
+			if (response) return response;
 			throw error;
 		}
 	}

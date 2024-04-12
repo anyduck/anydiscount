@@ -4,7 +4,7 @@
 	import Coupon from "$lib/components/Coupon.svelte";
 	import { onMount } from "svelte";
 
-	/** @type {import("../coupons/[id=uuid]/+server").Data["coupon"][]} */
+	/** @type {import("../coupons/[id=uuid]/loyalty.json/+server").Response["coupon"][]} */
 	let coupons = [];
 	const expiredAt = new Date();
 
@@ -15,7 +15,7 @@
 		for (const response of await cache.matchAll()) {
 			if (new Date(response.headers.get("date") ?? 0) < notBefore) {
 				await cache.delete(response.url, { ignoreVary: true });
-			} else {
+			} else if (response.url.includes("loyalty.json")) {
 				coupons = [...coupons, (await response.json()).coupon];
 			}
 		}

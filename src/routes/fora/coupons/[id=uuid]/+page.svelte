@@ -1,42 +1,50 @@
 <script>
-	import { browser } from "$app/environment";
 	import Barcode from "$lib/components/Barcode.svelte";
 	import Qrcode from "$lib/components/Qrcode.svelte";
-	import { encodeLoyaltyData, generateQRString } from "$lib/fora/qrcode";
+	import { encodeLoyaltyData, encryptLoyaltyData } from "$lib/fora/qrcode";
 	import { onMount } from "svelte";
 
 	/** @type {import('./$types').PageData} */
 	export let data;
 
-	const [posId, posPEM] = [data.keys.posKey.id, data.keys.posKey.pemKey];
-	const [guid, coupons] = [data.sessionId, data.personalInfo.Coupons];
-	let loyaltyData = encodeLoyaltyData(1, guid, coupons);
+	console.log(data);
+
+	let qrstring = generateQRString();
 
 	onMount(() => {
 		const interval = setInterval(() => {
-			loyaltyData = encodeLoyaltyData(1, guid, coupons);
+			qrstring = generateQRString();
 		}, 60_000);
 		return () => clearInterval(interval);
 	});
+
+	async function generateQRString() {
+		/* prettier-ignore */
+		const { keys, personalInfo: { Coupons } } = await data.qrkeys;
+		const loyaltyData = encodeLoyaltyData(1, data.loyalty.account.sessionId, Coupons);
+		return await encryptLoyaltyData(keys.posKey.id, keys.posKey.pemKey, loyaltyData);
+	}
 </script>
 
 <div class="section barcode">
-	{#await generateQRString(posId, posPEM, loyaltyData)}
-		<svg width="200px" height="200px"></svg>
+	{#await qrstring}
+		Loading...
 	{:then text}
 		<Qrcode {text} />
 	{:catch}
-		<Barcode ean_13={data.coupon.accountId.replaceAll("-", "")} />
+		<Barcode ean_13={data.loyalty.coupon.accountId.replaceAll("-", "")} />
 	{/await}
 </div>
 <div class="separator"></div>
 <div class="section info">
 	Баланс:
-	{#if browser && !navigator.onLine}
-		<span class="balance skeleton">00.00 грн.</span>
-	{:else}
-		<span class="balance">{data.personalInfo.Bonus.bonusBalanceAmount} грн.</span>
-	{/if}
+	{#await data.qrkeys}
+		<span class="balance skeleton">????? грн.</span>
+	{:then { personalInfo: { Bonus: { bonusBalanceAmount } } }}
+		{#if navigator?.onLine}
+			<span class="balance">{bonusBalanceAmount} грн.</span>
+		{/if}
+	{/await}
 </div>
 
 <style>

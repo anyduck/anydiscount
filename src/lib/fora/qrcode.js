@@ -9,7 +9,7 @@ const VERSION = 1;
  * @param {Uint8Array} payload
  * @return {Promise<string>}
  */
-export async function generateQRString(posId, posPEM, payload) {
+export async function encryptLoyaltyData(posId, posPEM, payload) {
 	const algorithm = { name: "ECDH", namedCurve: "P-256" };
 	const posKey = await crypto.subtle.importKey("spki", pem2bytes(posPEM), algorithm, true, []);
 	const pair = await crypto.subtle.generateKey(algorithm, true, ["deriveBits"]);
@@ -78,9 +78,6 @@ async function deriveSharedKey(publicKey, privateKey) {
 	// https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-56Cr1.pdf
 	const pre = new Uint8Array([0, 0, 0, 1, ...new Uint8Array(shr)]);
 	const raw = await crypto.subtle.digest({ name: "SHA-256" }, pre);
-
-	console.debug("Shared Secret:", bytes2hex(new Uint8Array(shr)));
-	console.debug("Shared AES128:", bytes2hex(new Uint8Array(raw)));
 
 	const algorithm = { name: "AES-GCM", length: 128 };
 	return await crypto.subtle.importKey("raw", raw, algorithm, false, ["encrypt"]);
