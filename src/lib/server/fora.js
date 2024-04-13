@@ -342,7 +342,7 @@ async function request(body, userInfo, token) {
 	let count = 3;
 	for (;;) {
 		try {
-			return await fetch(request);
+			return await fetch(request.clone());
 		} catch (error) {
 			console.error("[RETRY]", (count -= 1), error);
 			if (count < 0) throw error;
