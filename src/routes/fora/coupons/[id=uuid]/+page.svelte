@@ -37,7 +37,7 @@
 	{:then text}
 		<Qrcode {text} />
 	{:catch}
-		<Barcode ean_13={data.loyalty.coupon.accountId.replaceAll("-", "")} />
+		<Barcode ean13={data.loyalty.coupon.accountId} />
 	{/await}
 </div>
 <div class="separator"></div>

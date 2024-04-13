@@ -1,79 +1,85 @@
 <script>
 	/** @type {string} */
-	export let ean_13;
+	export let ean13;
 
-	const EDGE = [1, 1, 1]; // 101
-	const MIDDLE = [1, 1, 1, 1, 1]; // 01010
-	const DIGIT2LINE = [
-		[3, 2, 1, 1], // 0001101
-		[2, 2, 2, 1], // 0011001
-		[2, 1, 2, 2], // 0010011
-		[1, 4, 1, 1], // 0111101
-		[1, 1, 3, 2], // 0100011
-		[1, 2, 3, 1], // 0110001
-		[1, 1, 1, 4], // 0101111
-		[1, 3, 1, 2], // 0111011
-		[1, 2, 1, 3], // 0110111
-		[3, 1, 1, 2], // 0001011
+	const QUIET = 9;
+
+	// run-length encoded	LLLLLLL	GGGGGGG	RRRRRRR
+	const DIGIT = [
+		[3, 2, 1, 1], // 0	0001101	0100111	1110010
+		[2, 2, 2, 1], // 1	0011001	0110011	1100110
+		[2, 1, 2, 2], // 2	0010011	0011011	1101100
+		[1, 4, 1, 1], // 3	0111101	0100001	1000010
+		[1, 1, 3, 2], // 4	0100011	0011101	1011100
+		[1, 2, 3, 1], // 5	0110001	0111001	1001110
+		[1, 1, 1, 4], // 6	0101111	0000101	1010000
+		[1, 3, 1, 2], // 7	0111011	0010001	1000100
+		[1, 2, 1, 3], // 8	0110111	0001001	1001000
+		[3, 1, 1, 2], // 9	0001011	0010111	1110100
 	];
 
-	/**
-	 * Parses the UPC-A barcode, which is a subset of the EAN-13 standard
-	 * @param {string} ean_13 string of 13 numeric characters
-	 * @returns {number[]} array of 12 digits
-	 */
-	function parseUPC_A(ean_13) {
-		// https://en.wikipedia.org/wiki/International_Article_Number
-		if (ean_13.length !== 13 || isNaN(Number(ean_13))) {
-			throw new Error("Unexpected symbols in the barcode");
-		}
-		if (!ean_13.startsWith("0")) {
-			throw new Error("This barcode isn't UPC-A compatible");
-		}
+	const FIRST = /** @type {const} */ ([
+		["L", "L", "L", "L", "L", "L"],
+		["L", "L", "G", "L", "G", "G"],
+		["L", "L", "G", "G", "L", "G"],
+		["L", "L", "G", "G", "G", "L"],
+		["L", "G", "L", "L", "G", "G"],
+		["L", "G", "G", "L", "L", "G"],
+		["L", "G", "G", "G", "L", "L"],
+		["L", "G", "L", "G", "L", "G"],
+		["L", "G", "L", "G", "G", "L"],
+		["L", "G", "G", "L", "G", "L"],
+	]);
 
-		// https://en.wikipedia.org/wiki/Universal_Product_Code
-		const upc_a = Array.from(ean_13.slice(1), (c) => Number(c));
+	const CODES = { L: DIGIT, G: DIGIT.map((d) => d.toReversed()), R: DIGIT };
+
+	/**
+	 * Parses the EAN-13 barcode after removing non numeric chars
+	 * https://en.wikipedia.org/wiki/International_Article_Number
+	 * @param {string} ean13
+	 * @returns {Uint8Array}
+	 */
+	function parseEAN13(ean13) {
+		const string = ean13.replace(/\D+/g, "");
+		if (string.length !== 13) {
+			throw new Error("Barcode with wrong length");
+		}
+		const array = Uint8Array.from(string, (c) => Number(c));
 
 		let checksum = 0;
-		for (let i = 0; i < upc_a.length - 1; i++) {
-			checksum += upc_a[i] * (3 - 2 * (i % 2));
+		for (let i = 0; i < array.length - 1; i++) {
+			checksum += array[i] * (1 + 2 * (i % 2));
 		}
 		checksum = (10 - (checksum % 10)) % 10;
 
-		if (upc_a.at(-1) !== checksum) {
-			throw new Error("This barcode has wrong checksum");
+		if (array.at(-1) !== checksum) {
+			throw new Error("Barcode with wrong checksum");
 		}
-		return upc_a;
+		return array;
 	}
 
 	/**
-	 * Builds a representation of the UPC-A barcode
-	 * @param {number[]} upc_a array of 12 digits
-	 * @returns {number[]} array of barcode strip lengths
+	 * Builds a representation of the barcode
+	 * @param {Uint8Array} ean13
+	 * @returns {Uint8Array} strip lengths
 	 */
-	function build_line(upc_a) {
-		// 1 edge + 6 digits + 1 middle + 6 digits + 1 edge
-		const line_length = 2 * EDGE.length + MIDDLE.length + 12 * DIGIT2LINE[0].length;
-		/** @type {number[]} */
-		const line = new Array(line_length).fill(1);
+	function lineEAN13(ean13) {
+		// EDGE + 6 * DIGIT + MIDDLE + 6 * DIGIT + EDGE
+		const line = new Uint8Array(2 * 3 + 5 + 12 * 4).fill(1);
 		for (let i = 0; i < 6; i++) {
-			line.splice(3 + 4 * i, 4, ...DIGIT2LINE[upc_a[i]]);
-		}
-		for (let i = 6; i < 12; i++) {
-			line.splice(3 + 5 + 4 * i, 4, ...DIGIT2LINE[upc_a[i]]);
+			const codesLGR = FIRST[ean13[0]][i];
+			line.set(CODES[codesLGR][ean13[i + 1]], 4 * i + 3);
+			line.set(CODES["R"][ean13[i + 7]], 4 * i + 8 + 24);
 		}
 		return line;
 	}
 
-	/** @typedef {readonly [x: number, width: number]} Rect */
-
 	/**
-	 * Converts an array of barcode strip lengths into SVG elements
-	 * @param {number[]} line array of barcode strip lengths
-	 * @returns {Rect[]} array of rects for building SVG
+	 * Converts strip lengths into SVG rects
+	 * @param {Uint8Array} line strip lengths
+	 * @returns {[x: number, width: number][]}
 	 */
 	function line2rects(line) {
-		/** @type {Rect[]} */
 		const bars = new Array(Math.floor(line.length / 2));
 		let count = 0;
 		for (let i = 0; i < line.length; i++) {
@@ -89,9 +95,9 @@
 	}
 </script>
 
-<svg fill="black" viewBox="0 0 55 95" version="1.1" xmlns="http://www.w3.org/2000/svg">
-	<rect fill="white" width="100%" height="95" />
-	{#each line2rects(build_line(parseUPC_A(ean_13))) as [y, height]}
-		<rect {y} width="100%" {height} />
+<svg viewBox="0 0 55 {95 + 2 * QUIET}" version="1.1" xmlns="http://www.w3.org/2000/svg">
+	<rect fill="white" width="100%" height="100%" />
+	{#each line2rects(lineEAN13(parseEAN13(ean13))) as [y, height]}
+		<rect y={y + QUIET} width="100%" {height} />
 	{/each}
 </svg>
