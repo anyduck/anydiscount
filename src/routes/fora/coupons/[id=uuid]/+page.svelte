@@ -7,8 +7,13 @@
 	/** @type {import('./$types').PageData} */
 	export let data;
 
-	console.log(data);
-
+	/** @type {Promise<import("./qrkeys.json/+server").Response>} */
+	const qrkeys = data.qrkeys.then((response) => {
+		if (response.ok) return response.json();
+		// NOTICE: SvelteKit fetch returns undefined
+		// instead of throwing error while streaming
+		throw new Error(response.statusText);
+	});
 	let qrstring = generateQRString();
 
 	onMount(() => {
@@ -20,7 +25,7 @@
 
 	async function generateQRString() {
 		/* prettier-ignore */
-		const { keys, personalInfo: { Coupons } } = await data.qrkeys;
+		const { keys, personalInfo: { Coupons } } = await qrkeys;
 		const loyaltyData = encodeLoyaltyData(1, data.loyalty.account.sessionId, Coupons);
 		return await encryptLoyaltyData(keys.posKey.id, keys.posKey.pemKey, loyaltyData);
 	}
@@ -38,12 +43,14 @@
 <div class="separator"></div>
 <div class="section info">
 	Баланс:
-	{#await data.qrkeys}
+	{#await qrkeys}
 		<span class="balance skeleton">????? грн.</span>
 	{:then { personalInfo: { Bonus: { bonusBalanceAmount } } }}
 		{#if navigator?.onLine}
 			<span class="balance">{bonusBalanceAmount} грн.</span>
 		{/if}
+	{:catch}
+		<span class="balance">????? грн.</span>
 	{/await}
 </div>
 

@@ -3,13 +3,18 @@ import { error } from "@sveltejs/kit";
 
 /** @type {import('./$types').PageLoad} */
 export async function load({ fetch, params }) {
-	/** @type {Promise<import("./qrkeys.json/+server").Response>} */
-	const qrkeys = cache(fetch, `/fora/coupons/${params.id}/qrkeys.json`).then(parseJSON);
+	const qrkeys = cache(fetch, `/fora/coupons/${params.id}/qrkeys.json`);
+	const loyalty = await cache(fetch, `/fora/coupons/${params.id}/loyalty.json`);
+
+	if (!loyalty.ok) {
+		/** @type {{message: string}} */
+		const data = await loyalty.json();
+		error(loyalty.status, data.message);
+	}
 
 	/** @type {import("./loyalty.json/+server").Response} */
-	const loyalty = await cache(fetch, `/fora/coupons/${params.id}/loyalty.json`).then(parseJSON);
-
-	return { qrkeys, loyalty };
+	const loyaltyData = await loyalty.json();
+	return { qrkeys, loyalty: loyaltyData };
 }
 
 /**
@@ -28,15 +33,4 @@ async function cache(fetch, input) {
 		await cache.put(input, response.clone());
 	}
 	return response;
-}
-
-/**
- * Parses SvelteKit JSON response
- * @param {Response} response
- * @returns {Promise<any>}
- */
-async function parseJSON(response) {
-	const data = await response.json();
-	if (response.ok) return data;
-	error(response.status, data?.message || response.statusText);
 }
