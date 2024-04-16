@@ -1,39 +1,64 @@
-<section style="--color-accent: orange">
-	<header data-watermark="Сільпо">Купони</header>
-	<form method="post" action="/silpo/coupons/random">
-		<h2>Від 10 до 100 грн</h2>
-		<button type="submit" disabled>Може скоро</button>
-	</form>
-	<footer>
-		<a href="#">Переглянути всі купони</a>
-	</footer>
-</section>
+<script>
+	import next from "$lib/assets/next.svg?raw";
+	import { onMount } from "svelte";
 
-<section style="--color-accent: var(--color-lime-500)">
-	<header data-watermark="Фора">Купони</header>
-	<form method="post" action="/fora/coupons/random">
-		<h2>Від 0 до 100 грн</h2>
-		<button type="submit">Випадковий</button>
-	</form>
-	<footer>
-		<a href="/fora/coupons">Переглянути всі купони</a>
-	</footer>
-</section>
+	// FIXME: find a better way to remove cold start delays
+	onMount(() => fetch("/fora/coupons?wakeup").catch(() => {}));
+
+	const pluralRules = new Intl.PluralRules("ukr");
+
+	/** @param {number} count */
+	function getPluralCount(count) {
+		switch (pluralRules.select(count)) {
+			case "one":
+				return `${count} купон`;
+			case "few":
+				return `${count} купони`;
+			case "many":
+				return `${count} купонів`;
+			default:
+				return count.toString();
+		}
+	}
+</script>
+
+<menu data-sveltekit-preload-data="">
+	<li style="--color-accent: orange">
+		<a href="/fora/coupons" data-watermark="Сільпо">
+			{getPluralCount(0)} <span class="icon">{@html next}</span>
+		</a>
+	</li>
+	<li style="--color-accent: var(--color-lime-500)">
+		<a href="/fora/coupons" data-watermark="Фора">
+			{getPluralCount(99)} <span class="icon">{@html next}</span>
+		</a>
+	</li>
+</menu>
 
 <style>
-	section {
+	menu {
 		max-width: 480px;
 		margin-inline: auto;
 		padding-inline: 1rem;
 		margin-top: 5rem;
+		list-style: none;
+		position: relative;
 	}
-	header {
+	menu a {
+		display: block;
 		text-align: right;
 		font-weight: 900;
 		font-size: 2rem;
-		position: relative;
+		color: var(--color-text);
+		text-transform: capitalize;
+		text-decoration: none;
+		line-height: 6rem;
 	}
-	header::before {
+	menu .icon {
+		vertical-align: middle;
+		filter: drop-shadow(0 0 1.5rem var(--color-accent));
+	}
+	menu a::after {
 		content: attr(data-watermark);
 		text-transform: uppercase;
 		font-weight: 900;
@@ -48,42 +73,6 @@
 
 		position: absolute;
 		left: 0;
-		top: -100%;
 		z-index: -1;
-	}
-	footer {
-		margin-top: 1rem;
-		text-align: center;
-	}
-	a {
-		color: var(--color-blue-500);
-	}
-	form {
-		display: flex;
-		justify-content: space-around;
-		align-items: center;
-		background-color: var(--color-surface-section);
-		border-radius: 0.25rem;
-		height: 7rem;
-		box-shadow: 0 0 1rem rgb(0 0 0 / 0.122);
-	}
-	button {
-		background-color: var(--color-text);
-		color: var(--color-text-accent);
-		box-shadow: 0 0 1rem rgb(0 0 0 / 0.122);
-
-		padding: 0.5rem 1rem;
-		border-radius: 1rem;
-		font-size: 1rem;
-		line-height: 1rem;
-
-		font-weight: 600;
-		cursor: pointer;
-		border: none;
-		-webkit-tap-highlight-color: transparent;
-	}
-	button:disabled {
-		pointer-events: none;
-		opacity: 0.3;
 	}
 </style>
