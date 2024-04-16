@@ -1,4 +1,5 @@
 import { SMSHUB_APIKEY } from "$env/static/private";
+import { RetryError, retry } from "$lib/retry";
 import {
 	accounts,
 	activeBonuses,
@@ -27,13 +28,17 @@ import {
 	sendOTP,
 	setBonusToApply,
 } from "$lib/server/fora";
+import logger from "$lib/server/logger";
 import { getPhoneNumber } from "$lib/server/smshub";
 import { and, count, eq, gt, gte, inArray, lt, not, or, sql } from "drizzle-orm";
-import { RetryError, retry } from "$lib/retry";
 
 export async function maintenance() {
-	await syncCouponInfos();
-	await createNewCoupons();
+	try {
+		await syncCouponInfos();
+		await createNewCoupons();
+	} finally {
+		await logger.flush();
+	}
 }
 
 export async function syncCouponInfos() {
