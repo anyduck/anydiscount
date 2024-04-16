@@ -7,12 +7,11 @@
 	/** @type {import('./$types').PageData} */
 	export let data;
 
-	/** @type {Promise<import("./qrkeys.json/+server").Response>} */
 	const qrkeys = data.qrkeys.then((response) => {
-		if (response.ok) return response.json();
+		if (response && "keys" in response) return response;
 		// NOTICE: SvelteKit fetch returns undefined
 		// instead of throwing error while streaming
-		throw new Error(response.statusText);
+		throw new Error(response?.message || "Network Error");
 	});
 	let qrstring = generateQRString();
 

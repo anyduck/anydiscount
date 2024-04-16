@@ -14,7 +14,12 @@ export async function load({ fetch, params }) {
 
 	/** @type {import("./loyalty.json/+server").Response} */
 	const loyaltyData = await loyalty.json();
-	return { qrkeys, loyalty: loyaltyData };
+	/**
+	 * NOTICE: We need to make a call to `respnose.json()`
+	 * for SvelteKit to embed this response data into SSR
+	 * @type {Promise<import("./qrkeys.json/+server").Response | { message: string } | undefined>} */
+	const qrkeysData = qrkeys.then((response) => response.json());
+	return { qrkeys: qrkeysData, loyalty: loyaltyData };
 }
 
 /**
