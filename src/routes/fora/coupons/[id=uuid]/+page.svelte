@@ -29,19 +29,31 @@
 		const loyaltyData = encodeLoyaltyData(1, data.loyalty.account.sessionId, Coupons);
 		return await encryptLoyaltyData(keys.posKey.id, keys.posKey.pemKey, loyaltyData);
 	}
+	/** @param {string} phone */
+	function formatPhone(phone) {
+		return phone.replace(/(\d{2})(\d{3})(\d{3})(\d{4})/, "+$1 ($2) $3-$4");
+	}
 </script>
 
-<div class="section barcode">
-	{#await qrstring}
-		Loading...
-	{:then text}
-		<Qrcode {text} />
-	{:catch}
+<section class="personal-card">
+	<h1>Картка Власного Рахунку</h1>
+	<span class="phone">
+		{formatPhone(data.loyalty.account.phone)}
+	</span>
+	{#await qrkeys}
+		<Barcode ean13={data.loyalty.coupon.accountId} />
+	{:then _}
+		{#await qrstring then text}
+			<Qrcode {text} />
+			<span class="hint"> Відскануйте QR-код на касі, щоб <br /> застосувати балобонуси </span>
+			<a role="button" href="/fora/coupons/{data.loyalty.coupon.id}/coupons">Мої пропозиції</a>
+		{/await}
+	{/await}
+	{#await qrstring catch}
 		<Barcode ean13={data.loyalty.coupon.accountId} />
 	{/await}
-</div>
-<div class="separator"></div>
-<div class="section info">
+</section>
+<section class="controls">
 	Баланс:
 	{#await qrkeys}
 		<span class="balance skeleton">????? грн.</span>
@@ -52,38 +64,41 @@
 	{:catch}
 		<span class="balance">????? грн.</span>
 	{/await}
-</div>
+</section>
 
 <style>
-	.section {
-		padding: 1rem;
-		border-radius: 0.5rem;
-		background-color: var(--color-text-accent);
+	.personal-card {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		text-align: center;
+
+		height: 32rem;
+		padding-block: 1.5rem;
+		background-color: var(--color-surface-section);
 	}
-	.barcode {
-		padding: 2rem calc(50% - 100px);
+	.personal-card h1 {
+		font-size: 1rem;
+		margin-bottom: 0;
+		font-weight: 500;
 	}
-	.separator {
-		position: relative;
-		height: 0.2rem;
+	.personal-card .phone {
+		font-weight: 700;
+		color: var(--color-accent);
 	}
-	.separator::before,
-	.separator::after {
-		content: "";
-		position: absolute;
-		width: 2rem;
-		height: 2rem;
-		background-color: var(--color-surface-ground);
-		border-radius: 1rem;
-		bottom: -0.9rem;
+	.personal-card .hint {
+		flex-grow: 1;
+		margin-block: -5% 1rem;
+		color: var(--color-hint);
 	}
-	.separator::before {
-		left: -1rem;
+	.personal-card [role="button"] {
+		padding: 0.5rem 4rem;
+		border-radius: 1.5rem;
+		text-decoration: none;
+		color: var(--color-text-accent);
+		background-color: var(--color-accent);
 	}
-	.separator::after {
-		right: -1rem;
-	}
-	.info {
+	.controls {
 		text-align: center;
 		font-size: 1.5rem;
 	}

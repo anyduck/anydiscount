@@ -12,10 +12,6 @@
 	--color-green-500: #22c55e;
 	--color-blue-500: #3b82f6;
 
-	/* font families */
-	--ff-base: "IBM Plex Sans", sans-serif;
-	--ff-accent: "Young Serif", serif;
-
 	/* theme */
 	--color-accent: var(--color-lime-500);
 	--color-text: var(--color-slate-900);
@@ -30,7 +26,7 @@ body {
 	margin: 0;
 	background: var(--color-surface-ground);
 	color: var(--color-text);
-	font-family: var(--ff-base);
+	font-family: system-ui, sans-serif;
 }
 
 .skeleton {
