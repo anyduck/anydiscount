@@ -95,6 +95,8 @@ export async function syncCouponInfos() {
 			const accruedOn = getDateAterTomorrow(
 				rewardReceipts.reduce((min, r) => (min.createdAt < r.createdAt ? min : r)).createdAt,
 			);
+			// FIXME: after DST day it's one day off
+			logger.debug(coupon.id, accruedOn, accruedOn.toISOString(), accruedOn.toString());
 			const expiredOn = getNext3Month(accruedOn);
 			_bonuses.push({
 				accountId: account.id,
@@ -217,7 +219,7 @@ export async function createNewCoupons() {
 		.groupBy(subscriptions.familyId)
 		.having(({ count }) => lt(count, subscriptions.surplus));
 
-	console.log(subs);
+	logger.info("subscriptions", subs);
 
 	for (const sub of subs) {
 		if (sub.rootId === null) {
@@ -423,14 +425,6 @@ async function registerAccount(referrerGuid) {
 	const { tokens } = await confirmationOtp(account, guid, `+${phone.number}`, otpCode);
 	account.accessToken = tokens.accessToken.value;
 	account.refreshToken = tokens.refreshToken.value;
-
-	console.log("OTP", {
-		accessToken: account.accessToken,
-		refreshToken: account.refreshToken,
-		deviceId: deviceId,
-		phone: phone.number,
-		sessionId: guid,
-	});
 
 	const { registered } = await checkUser(account);
 

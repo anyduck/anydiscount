@@ -1,3 +1,4 @@
+import logger from "$lib/server/logger";
 import { z } from "zod";
 
 const APP_VERSION_CODE = "195";
@@ -273,7 +274,7 @@ export async function registerUserReferral(account, guid, phone, referrerGuid) {
 		return response.parse(JSON.parse(text));
 	} catch (error) {
 		if (error instanceof SyntaxError) {
-			console.error(error.message, text);
+			logger.error(error.message, text);
 		} else {
 			throw error;
 		}
@@ -342,9 +343,11 @@ async function request(body, userInfo, token) {
 	let count = 3;
 	for (;;) {
 		try {
-			return await fetch(request.clone());
+			const response = await fetch(request.clone());
+			logger.debug(response, await response.clone().text());
+			return response;
 		} catch (error) {
-			console.error("[RETRY]", (count -= 1), error);
+			logger.error("[RETRY]", (count -= 1), error);
 			if (count < 0) throw error;
 			// TODO: add exponential backoff
 		}
