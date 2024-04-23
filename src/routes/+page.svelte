@@ -1,9 +1,9 @@
 <script>
+	import { preloadData } from "$app/navigation";
 	import next from "$lib/assets/next.svg?raw";
 	import { onMount } from "svelte";
 
-	// FIXME: find a better way to remove cold start delays
-	onMount(() => fetch("/fora/coupons?wakeup").catch(() => {}));
+	onMount(() => preloadData("/fora/coupons"));
 
 	const pluralRules = new Intl.PluralRules("ukr");
 
@@ -24,7 +24,7 @@
 
 <menu data-sveltekit-preload-data="">
 	<li style="--color-accent: orange">
-		<a href="/fora/coupons" data-watermark="Сільпо">
+		<a href="/silpo/coupons" data-watermark="Сільпо">
 			{getPluralCount(0)} <span class="icon">{@html next}</span>
 		</a>
 	</li>
