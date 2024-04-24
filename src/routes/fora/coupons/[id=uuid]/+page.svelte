@@ -1,4 +1,5 @@
 <script>
+	import { invalidateAll } from "$app/navigation";
 	import Barcode from "$lib/components/Barcode.svelte";
 	import Qrcode from "$lib/components/Qrcode.svelte";
 	import { encodeLoyaltyData, encryptLoyaltyData } from "$lib/fora/qrcode";
@@ -7,48 +8,63 @@
 	/** @type {import('./$types').PageData} */
 	export let data;
 
-	const qrkeys = data.qrkeys.then((response) => {
-		if (response && "keys" in response) return response;
-		// NOTICE: SvelteKit fetch returns undefined
-		// instead of throwing error while streaming
-		throw new Error(response?.message || "Network Error");
-	});
-	let qrstring = generateQRString();
+	$: qrkeys = streamedFetch(data.qrkeys);
+	$: qrstring = generateQRString(qrkeys);
 
 	onMount(() => {
 		const interval = setInterval(() => {
-			qrstring = generateQRString();
+			qrkeys = qrkeys;
 		}, 60_000);
 		return () => clearInterval(interval);
 	});
 
-	async function generateQRString() {
+	/**
+	 * Finished streamed fetch from page load function
+	 * @template {Record<string, any>} JSON
+	 * @param {Promise<JSON | { message: string } | undefined>} response
+	 * @returns {Promise<JSON>}
+	 */
+	async function streamedFetch(response) {
+		const data = await response;
+		// NOTICE: SvelteKit fetch returns undefined
+		// instead of throwing error while streaming
+		if (!data || "message" in data) {
+			throw new Error(data?.message || "Network Error");
+		}
+		return data;
+	}
+
+	/** @param {typeof qrkeys} qrkeys */
+	async function generateQRString(qrkeys) {
 		/* prettier-ignore */
 		const { keys, personalInfo: { Coupons } } = await qrkeys;
 		const loyaltyData = encodeLoyaltyData(1, data.loyalty.account.sessionId, Coupons);
 		return await encryptLoyaltyData(keys.posKey.id, keys.posKey.pemKey, loyaltyData);
 	}
+
 	/** @param {string} phone */
 	function formatPhone(phone) {
 		return phone.replace(/(\d{2})(\d{3})(\d{3})(\d{4})/, "+$1 ($2) $3-$4");
 	}
 </script>
 
+<!-- TODO: add icon and styles -->
+<button on:click={() => (qrstring = Promise.reject())}>Info</button>
+<button on:click={() => invalidateAll()}>Reload</button>
+
 <section class="personal-card">
 	<h1>Картка Власного Рахунку</h1>
 	<span class="phone">
 		{formatPhone(data.loyalty.account.phone)}
 	</span>
-	{#await qrkeys}
-		<Barcode ean13={data.loyalty.coupon.accountId} />
-	{:then _}
-		{#await qrstring then text}
-			<Qrcode {text} />
-			<span class="hint"> Відскануйте QR-код на касі, щоб <br /> застосувати балобонуси </span>
-			<a role="button" href="/fora/coupons/{data.loyalty.coupon.id}/coupons">Мої пропозиції</a>
-		{/await}
-	{/await}
-	{#await qrstring catch}
+	{#await qrstring}
+		<!-- TODO: add loading animation -->
+		Loading...
+	{:then text}
+		<Qrcode {text} />
+		<span class="hint"> Відскануйте QR-код на касі, щоб <br /> застосувати балобонуси </span>
+		<a role="button" href="/fora/coupons/{data.loyalty.coupon.id}/coupons">Мої пропозиції</a>
+	{:catch}
 		<Barcode ean13={data.loyalty.coupon.accountId} />
 	{/await}
 </section>
