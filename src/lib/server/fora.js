@@ -1,8 +1,8 @@
 import logger from "$lib/server/logger";
 import { z } from "zod";
 
-const APP_VERSION_CODE = "195";
-const APP_VERSION_NAME = "1.39.4";
+const APP_VERSION_CODE = "200";
+const APP_VERSION_NAME = "1.40.2";
 const APP_API_URL = "https://api.mob.fora.ua/api/2.0/exec/FZGlobal/";
 
 export const REFERRAL_REWARD_AMOUNT = 50.0;
