@@ -46,6 +46,23 @@ export class Account {
 
 /**
  * @param {Account} account
+ */
+export async function refreshToken(account) {
+	const response = BASE_RESPONSE.extend({
+		tokens: z.object({
+			accessToken: z.object({ value: z.string() }),
+			refreshToken: z.object({ value: z.string() }),
+		}),
+	});
+
+	/** @type {Body} */
+	const body = { Data: {}, Method: "RefreshToken" };
+	const resp = await request(body, account.userInfo, account.refreshToken);
+	return response.parse(await resp.json());
+}
+
+/**
+ * @param {Account} account
  * @param {boolean} forceUpdate
  */
 export async function getPersonalInfo(account, forceUpdate) {
@@ -75,6 +92,33 @@ export async function getPersonalInfo(account, forceUpdate) {
 
 /**
  * @param {Account} account
+ * @param {string} guid
+ * @param {string} phone
+ */
+export async function getPersonalInfoBonus(account, guid, phone) {
+	const response = BASE_RESPONSE.extend({
+		bonus: z.object({
+			currentBalanceAmount: z.string(),
+			bonusBalanceAmount: z.number(),
+			balanceLines: z.array(
+				z.object({
+					amount: z.string(),
+					type: z.number(),
+					date: z.string(),
+					expiredDate: z.string().regex(/^діє до /),
+				}),
+			),
+		}),
+	});
+
+	/** @type {Body} */
+	const body = { Method: "GetPersonalInfoBonus", Data: BASE_DATA.parse({ guid, phone }) };
+	const resp = await request(body, account.userInfo, account.accessToken);
+	return response.parse(await resp.json());
+}
+
+/**
+ * @param {Account} account
  */
 export async function getQRKeys(account) {
 	const response = BASE_RESPONSE.extend({
@@ -90,23 +134,6 @@ export async function getQRKeys(account) {
 	/** @type {Body} */
 	const body = { Data: {}, Method: "GetQRKeys" };
 	const resp = await request(body, account.userInfo, account.accessToken);
-	return response.parse(await resp.json());
-}
-
-/**
- * @param {Account} account
- */
-export async function refreshToken(account) {
-	const response = BASE_RESPONSE.extend({
-		tokens: z.object({
-			accessToken: z.object({ value: z.string() }),
-			refreshToken: z.object({ value: z.string() }),
-		}),
-	});
-
-	/** @type {Body} */
-	const body = { Data: {}, Method: "RefreshToken" };
-	const resp = await request(body, account.userInfo, account.refreshToken);
 	return response.parse(await resp.json());
 }
 
@@ -231,6 +258,21 @@ export async function checkUser(account) {
 
 	/** @type {Body} */
 	const body = { Method: "CheckUser", Data: {} };
+	const resp = await request(body, account.userInfo, account.accessToken);
+	return response.parse(await resp.json());
+}
+
+/**
+ * @param {Account} account
+ * @param {number} platform
+ */
+export async function getAppConfigurations(account, platform) {
+	const response = BASE_RESPONSE.extend({
+		isUserReferralUse: z.boolean(),
+	});
+
+	/** @type {Body} */
+	const body = { Method: "GetAppConfigurations_V4", Data: { platform } };
 	const resp = await request(body, account.userInfo, account.accessToken);
 	return response.parse(await resp.json());
 }

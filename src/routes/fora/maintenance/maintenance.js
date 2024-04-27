@@ -19,6 +19,7 @@ import {
 	REFERRAL_REWARD_AMOUNT,
 	checkUser,
 	confirmationOtp,
+	getAppConfigurations,
 	getChequesInfos,
 	getLastChequeHeadersFast,
 	getPersonalInfo,
@@ -427,9 +428,13 @@ async function registerAccount(referrerGuid) {
 	account.refreshToken = tokens.refreshToken.value;
 
 	const { registered } = await checkUser(account);
-
 	if (registered) {
 		throw new RetryError("Already registered");
+	}
+
+	const { isUserReferralUse } = await getAppConfigurations(account, /* ANDROID */ 0);
+	if (!isUserReferralUse) {
+		throw new Error("Referral program disabled");
 	}
 
 	let data;
