@@ -88,16 +88,28 @@ export async function syncCouponInfos() {
 		_receipts.push(...data.receipts);
 		_receiptProducts.push(...data.products);
 
-		// Check if the referral reward is triggered
-		const rewardReceipts = data.receipts.filter(
-			(r) => parseFloat(r.total) + parseFloat(r.discount) >= REFERRAL_MINIMUM_SPEND,
-		);
-		if (coupon.isReferral && rewardReceipts.length) {
-			const accruedOn = getDateAterTomorrow(
-				rewardReceipts.reduce((min, r) => (min.createdAt < r.createdAt ? min : r)).createdAt,
-			);
-			// FIXME: after DST day it's one day off
-			logger.debug(coupon.id, accruedOn, accruedOn.toISOString(), accruedOn.toString());
+		/**
+		 * Receipt which triggered referral reward
+		 * @type {typeof data.receipts[number]?}
+		 */
+		let receiptWithReward = null;
+		let remainingDiscount = parseFloat(coupon.discount);
+		for (const receipt of data.receipts) {
+			const usedDiscount = parseFloat(receipt.discount);
+			if (
+				parseFloat(receipt.total) + usedDiscount >= REFERRAL_MINIMUM_SPEND &&
+				(!receiptWithReward || receipt.createdAt < receiptWithReward.createdAt)
+			) {
+				receiptWithReward = receipt;
+			}
+			remainingDiscount -= usedDiscount;
+		}
+
+		// Update coupon status and recreate it in case of cancellation
+		let newStatus = coupon.status;
+		if (coupon.isReferral && receiptWithReward) {
+			newStatus = "applied";
+			const accruedOn = receiptWithReward.createdAt;
 			const expiredOn = getNext3Month(accruedOn);
 			_bonuses.push({
 				accountId: account.id,
@@ -113,26 +125,20 @@ export async function syncCouponInfos() {
 				discount: REFERRAL_REWARD_AMOUNT.toString(),
 				expiredAt: expiredOn,
 			});
-		}
-
-		// Update coupon status and recreate it in case of cancellation
-		let status = coupon.status;
-		const newIsReferer = coupon.isReferral && !rewardReceipts.length;
-		const usedDiscount = data.receipts.reduce((sum, r) => sum + parseFloat(r.discount), 0);
-		if (parseFloat(coupon.discount) - usedDiscount > 10 || newIsReferer) {
+		} else if (coupon.isReferral || remainingDiscount > 10) {
+			newStatus = "canceled";
 			_coupons.push({
 				status: "template",
 				familyId: coupon.familyId,
 				accountId: account.id,
-				isReferral: newIsReferer,
+				isReferral: coupon.isReferral,
 				discount: "0",
 				expiredAt: coupon.expiredAt,
 			});
-			status = "canceled";
 		} else {
-			status = "applied";
+			newStatus = "applied";
 		}
-		await db.update(coupons).set({ status }).where(eq(coupons.id, coupon.id));
+		await db.update(coupons).set({ status: newStatus }).where(eq(coupons.id, coupon.id));
 	}
 
 	if (_receipts.length && _receiptProducts.length) {
