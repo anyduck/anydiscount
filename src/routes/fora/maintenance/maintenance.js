@@ -109,7 +109,7 @@ export async function syncCouponInfos() {
 		let newStatus = coupon.status;
 		if (coupon.isReferral && receiptWithReward) {
 			newStatus = "applied";
-			const accruedOn = receiptWithReward.createdAt;
+			const accruedOn = getDateAterTomorrow(receiptWithReward.createdAt);
 			const expiredOn = getNext3Month(accruedOn);
 			_bonuses.push({
 				accountId: account.id,
