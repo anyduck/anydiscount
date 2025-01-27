@@ -17,6 +17,8 @@
 		"@sveltejs/vite-plugin-svelte": "^3.0.0",
 		"@twa-dev/types": "^7.0.0",
 		"@types/eslint": "8.56.0",
+		"dotenv": "^16.4.7",
+		"drizzle-kit": "^0.30.3",
 		"eslint": "^8.56.0",
 		"eslint-config-prettier": "^9.1.0",
 		"eslint-plugin-svelte": "^2.35.1",
@@ -30,8 +32,8 @@
 	"type": "module",
 	"dependencies": {
 		"@msgpack/msgpack": "^3.0.0-beta2",
-		"@vercel/postgres": "^0.7.2",
-		"drizzle-orm": "^0.29.3",
+		"@vercel/postgres": "^0.10.0",
+		"drizzle-orm": "^0.38.4",
 		"oslo": "^1.1.3",
 		"qrjs": "^0.2.0",
 		"zod": "^3.22.4"
