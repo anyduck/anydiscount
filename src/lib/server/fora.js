@@ -1,6 +1,8 @@
 import logger from "$lib/server/logger";
 import { z } from "zod";
 
+/** @typedef {import("./smshub").PhoneNumber} PhoneNumber */
+
 const APP_VERSION_CODE = "200";
 const APP_VERSION_NAME = "1.40.2";
 const APP_API_URL = "https://api.mob.fora.ua/api/2.0/exec/FZGlobal/";
@@ -93,7 +95,7 @@ export async function getPersonalInfo(account, forceUpdate) {
 /**
  * @param {Account} account
  * @param {string} guid
- * @param {string} phone
+ * @param {PhoneNumber} phone
  */
 export async function getPersonalInfoBonus(account, guid, phone) {
 	const response = BASE_RESPONSE.extend({
@@ -112,7 +114,10 @@ export async function getPersonalInfoBonus(account, guid, phone) {
 	});
 
 	/** @type {Body} */
-	const body = { Method: "GetPersonalInfoBonus", Data: BASE_DATA.parse({ guid, phone }) };
+	const body = {
+		Method: "GetPersonalInfoBonus",
+		Data: BASE_DATA.parse({ guid, phone: phone.toE164String() }),
+	};
 	const resp = await request(body, account.userInfo, account.accessToken);
 	return response.parse(await resp.json());
 }
@@ -211,7 +216,7 @@ export async function getChequesInfos(account, identities) {
 /**
  * @param {Account} account
  * @param {string} guid
- * @param {string} phone
+ * @param {PhoneNumber} phone
  */
 export async function sendOTP(account, guid, phone) {
 	const response = BASE_RESPONSE.extend({
@@ -219,7 +224,10 @@ export async function sendOTP(account, guid, phone) {
 	});
 
 	/** @type {Body} */
-	const body = { Method: "SendOTP", Data: BASE_DATA.parse({ guid, phone }) };
+	const body = {
+		Method: "SendOTP",
+		Data: BASE_DATA.parse({ guid, phone: phone.toE164String() }),
+	};
 	const resp = await request(body, account.userInfo, account.accessToken);
 	return response.parse(await resp.json());
 }
@@ -227,7 +235,7 @@ export async function sendOTP(account, guid, phone) {
 /**
  * @param {Account} account
  * @param {string} guid
- * @param {string} phone
+ * @param {PhoneNumber} phone
  * @param {string} otpCode
  */
 export async function confirmationOtp(account, guid, phone, otpCode) {
@@ -242,7 +250,10 @@ export async function confirmationOtp(account, guid, phone, otpCode) {
 	});
 
 	/** @type {Body} */
-	const body = { Method: "ConfirmationOtp_V2", Data: data.parse({ guid, phone, otpCode }) };
+	const body = {
+		Method: "ConfirmationOtp_V2",
+		Data: data.parse({ guid, phone: phone.toE164String(), otpCode }),
+	};
 	const resp = await request(body, account.userInfo, account.accessToken);
 	return response.parse(await resp.json());
 }
@@ -295,7 +306,7 @@ export async function registerUser(account) {
 /**
  * @param {Account} account
  * @param {string} guid
- * @param {string} phone
+ * @param {PhoneNumber} phone
  * @param {string} referrerGuid
  */
 export async function registerUserReferral(account, guid, phone, referrerGuid) {
@@ -308,7 +319,10 @@ export async function registerUserReferral(account, guid, phone, referrerGuid) {
 	});
 
 	/** @type {Body} */
-	const body = { Method: "RegisterUserReferral", Data: data.parse({ guid, phone, referrerGuid }) };
+	const body = {
+		Method: "RegisterUserReferral",
+		Data: data.parse({ guid, phone: phone.toE164String(), referrerGuid }),
+	};
 	const resp = await request(body, account.userInfo, account.accessToken);
 	// TODO: why is this error happening? SyntaxError: Unexpected end of JSON input
 	const text = await resp.text();
@@ -328,7 +342,7 @@ export async function registerUserReferral(account, guid, phone, referrerGuid) {
 /**
  * @param {Account} account
  * @param {string} guid
- * @param {string} phone
+ * @param {PhoneNumber} phone
  */
 export async function setBonusToApply(account, guid, phone) {
 	const data = BASE_DATA.extend({
@@ -338,7 +352,7 @@ export async function setBonusToApply(account, guid, phone) {
 	/** @type {Body} */
 	const body = {
 		Method: "SetBonusToApply",
-		Data: data.parse({ bonuseCancellationId: 2, guid, phone }),
+		Data: data.parse({ bonuseCancellationId: 2, guid, phone: phone.toE164String() }),
 	};
 	const resp = await request(body, account.userInfo, account.accessToken);
 	return BASE_RESPONSE.parse(await resp.json());
