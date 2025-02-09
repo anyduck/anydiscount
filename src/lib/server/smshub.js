@@ -68,6 +68,23 @@ export class PhoneNumber {
 	}
 
 	/**
+	 * Formats the phone number using E.164 format
+	 * https://en.wikipedia.org/wiki/E.164
+	 * @returns {string}
+	 */
+	toE164String() {
+		return `+${this.number}`;
+	}
+
+	/**
+	 * Formats the phone number to our database specific format
+	 * @returns {string}
+	 */
+	toDatabaseString() {
+		return this.number;
+	}
+
+	/**
 	 * Waits for the SMS code in `interval`s
 	 * Cancels the number if `timeout` is reached
 	 * @param {number} timeout

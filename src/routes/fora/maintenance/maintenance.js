@@ -417,7 +417,7 @@ async function registerAccount(referrerGuid) {
 
 	const guid = crypto.randomUUID();
 
-	const { otpSend } = await sendOTP(account, guid, `+${phone.number}`);
+	const { otpSend } = await sendOTP(account, guid, phone);
 
 	// TODO: handle captcha request
 	// let pageurl = "https://www.google.com/recaptcha/api/siteverify";
@@ -429,7 +429,7 @@ async function registerAccount(referrerGuid) {
 	// TODO: add interval and timeout
 	const otpCode = await phone.getCode();
 
-	const { tokens } = await confirmationOtp(account, guid, `+${phone.number}`, otpCode);
+	const { tokens } = await confirmationOtp(account, guid, phone, otpCode);
 	account.accessToken = tokens.accessToken.value;
 	account.refreshToken = tokens.refreshToken.value;
 
@@ -445,7 +445,7 @@ async function registerAccount(referrerGuid) {
 
 	let data;
 	if (referrerGuid) {
-		data = await registerUserReferral(account, guid, `+${phone.number}`, referrerGuid);
+		data = await registerUserReferral(account, guid, phone, referrerGuid);
 	} else {
 		data = await registerUser(account);
 	}
@@ -455,14 +455,14 @@ async function registerAccount(referrerGuid) {
 		throw new RetryError("Couldn't register");
 	}
 
-	await setBonusToApply(account, guid, `+${phone.number}`);
+	await setBonusToApply(account, guid, phone);
 
 	return {
 		id: barcode,
 		accessToken: account.accessToken,
 		refreshToken: account.refreshToken,
 		deviceId: deviceId,
-		phone: phone.number,
+		phone: phone.toDatabaseString(),
 		sessionId: guid,
 	};
 }
