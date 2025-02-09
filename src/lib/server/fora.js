@@ -274,8 +274,18 @@ export async function checkUser(account) {
 }
 
 /**
+ * Enum platforms used in GetAppConfigurations
+ * @enum {number}
+ */
+export const Platfrom = {
+	ANDROID: 0,
+	IOS: 1,
+	HUAWEI: 2,
+}
+
+/**
  * @param {Account} account
- * @param {number} platform
+ * @param {Platfrom} platform
  */
 export async function getAppConfigurations(account, platform) {
 	const response = BASE_RESPONSE.extend({

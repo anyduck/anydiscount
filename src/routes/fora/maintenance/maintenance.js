@@ -15,6 +15,7 @@ import { db } from "$lib/server/db";
 import cached_devices from "$lib/server/devices.json";
 import {
 	Account,
+	Platfrom,
 	REFERRAL_MINIMUM_SPEND,
 	REFERRAL_REWARD_AMOUNT,
 	checkUser,
@@ -427,7 +428,7 @@ async function registerAccount(referrerGuid) {
 		throw new RetryError("Already registered");
 	}
 
-	const { isUserReferralUse } = await getAppConfigurations(account, /* ANDROID */ 0);
+	const { isUserReferralUse } = await getAppConfigurations(account, Platfrom.ANDROID);
 	if (!isUserReferralUse) {
 		throw new Error("Referral program disabled");
 	}
