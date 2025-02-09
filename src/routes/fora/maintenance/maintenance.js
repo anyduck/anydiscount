@@ -32,6 +32,7 @@ import {
 import logger from "$lib/server/logger";
 import { getPhoneNumber } from "$lib/server/smshub";
 import { and, count, eq, gt, gte, inArray, lt, not, or, sql } from "drizzle-orm";
+import { getDoubleReferrerStrategy } from "./double_referrer_strategy";
 
 export async function maintenance() {
 	try {
@@ -259,33 +260,14 @@ export async function createNewCoupons() {
 				.where(eq(subscriptions.familyId, sub.familyId));
 		}
 
-		const data = await db.execute(sql`
-		with recursive parents as (
-			select 0 as depth, id, session_id
-			from fora.accounts
-			where fora.accounts.id = ${sub.rootId}
-
-			union all
-
-			select depth + 1, fora.accounts.id, fora.accounts.session_id
-			from parents join fora.accounts on parents.id = fora.accounts.referrer_id
-			where depth < ${sub.height}
-		) select * from parents order by parents.id;`);
-
-		if (data.rowCount === 0) {
-			throw new Error("Couldn't find the root account");
-		}
-
-		const dfs = /** @type {{depth: number; id: string; session_id: string}[]} */ (data.rows);
-
-		const maxIndex = 2 ** (sub.height + 1) - 2;
-		let index = data.rowCount - 1;
+		const strategy = await getDoubleReferrerStrategy(sub.height, sub.rootId);
+		const iterator = strategy.iterator();
+		let referrer = strategy.peek();
 		let todo = sub.surplus - sub.count;
 
-		while (index < maxIndex && todo > 0) {
-			const referrer = dfs[index - bubbleStep(sub.height, index)];
+		while (referrer && todo > 0) {
 			const isLeaf = referrer.depth === sub.height - 1;
-			const account = await retry(() => registerAccount(referrer.session_id));
+			const account = await retry(() => registerAccount(referrer.sessionId));
 			account.referrerId = referrer.id;
 
 			await db.insert(accounts).values(account);
@@ -297,14 +279,21 @@ export async function createNewCoupons() {
 				familyId: sub.familyId,
 				expiredAt: expiredAt,
 			});
-			dfs.push({ depth: referrer.depth + 1, id: account.id, session_id: account.sessionId });
-
-			index += 1;
 			if (isLeaf) {
 				todo -= 1;
 			}
+			const result = iterator.next({
+				depth: referrer.depth + 1,
+				id: account.id,
+				sessionId: account.sessionId,
+			});
+			if (!result.done) {
+				referrer = result.value;
+			} else {
+				break;
+			}
 		}
-		if (index === maxIndex) {
+		if (strategy.isEmpty()) {
 			await db
 				.update(subscriptions)
 				.set({ rootId: null })
@@ -496,16 +485,4 @@ function getNext3Month(date) {
  */
 function getNext60Days(date) {
 	return new Date(date.getFullYear(), date.getMonth(), date.getDate() + 60);
-}
-
-/**
- * for binary tree in pre-order array representation
- * @param {number} depth
- * @param {number} index
- * @returns {number}
- */
-function bubbleStep(depth, index) {
-	const new_index = index % (2 ** depth - 1);
-	if (new_index === 0) return index;
-	return bubbleStep(depth - 1, new_index - 1);
 }
